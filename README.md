@@ -50,7 +50,7 @@ begin
   end;
 end; 
 ```
-Will produce `example.json:
+Will produce `\test\example.json`:
 ```json
 {
   "key1": 1,
