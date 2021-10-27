@@ -13,43 +13,49 @@ Some points of interest:
 Example:
 
 ```pascal
+function Test99(out Msg: string): Boolean;
 var
-  Json: TJson;
-  Str: String
+  Json: TMcJsonItem;
+  i: Integer;
 begin
-  Json := TJson.Create();
-
-  //put
-  Json.Put('field1', null);
-  Json.Put('field2', True);
-  Json.Put('field3', 3.14);
-  Json.Put('field4', 'hello world');
-
-  //another way
-  Json['field5'].AsBoolean := False;
-  Json['field6'].AsString := 'hello world';
-
-  //object
-  with Json['field7'].AsObject do
-  begin
-    Put('subfield1', 2.7182818284);
-    Put('subfield2', 'json4delphi');
+  Msg := 'Test: Github readme.md content';
+  Json := TMcJsonItem.Create();
+  try
+    try
+      // add some pairs.
+      Json.Add('key1').AsInteger := 1;
+      Json.Add('key2').AsBoolean := True;
+      Json.Add('key3').AsNumber  := 1.234;
+      Json.Add('key4').AsString  := 'value 1';
+      // add an array
+      Json.Add('array').ItemType := jitArray;
+      for i := 1 to 3 do
+        Json['array'].Add.AsInteger := i;
+      // save and load
+      Json.SaveToFile('example.json');
+      Json.LoadFromFile('example.json');
+      // remove an item
+      Json.Remove('array');
+      // test final result
+      Result := (Json.AsJSON = '{"key1": 1,"key2": true,"key3": 1.234,"key4": "value 1"}');
+    except
+      Result := False;
+    end;
+  finally
+    Json.Free;
   end;
-
-  //array
-  with Json['field8'].AsArray do
-  begin
-    Put(6.6260755e-34);
-    Put('The magic words are squeamish ossifrage');
-  end;
-
-  //get
-  Str := Json['field4'].AsString;
-
-  //parse
-  Json.Parse('{"a":1}');
-
-  //stringify
-  Str := Json.Stringify;
-end;
+end; 
 ```
+Will produce `example.json:
+```json
+{
+  "key1": 1,
+  "key2": true,
+  "key3": 1.234,
+  "key4": "value 1",
+  "array": [
+    1,
+    2,
+    3
+  ]
+}
