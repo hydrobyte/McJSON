@@ -71,8 +71,8 @@ A teste comparation have been done with the original myJSON and LkJson
 - Save to file
 - Load from file (parsing)
 
-Lib    | Generate    | Save | Load | Parse
--------|----- | -----|--------
-LkJson     | .85s | .15s | . 34s| |
-MyJSON     | .85s | .15s | . 34s| |
-**McJSON** | .09s | .14s | . 14s| |
+Lib        | Generate | Save | Load | Parse |
+-----------|----------|------|------|-------|
+LkJson     |     .85s | .15s | . 34s|    1s |
+MyJSON     |     .85s | .15s | . 34s|    2s |
+**McJSON** |     .09s | .14s | . 14s|    3s |
