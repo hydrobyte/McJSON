@@ -11,7 +11,7 @@ Some points of interest:
  * Inspired on [badunius/myJSON](https://github.com/badunius/myJSON).
  * Performance compared with [myJSON](https://github.com/badunius/myJSON) and "JSON Delphi libray" ([LkJson](https://sourceforge.net/projects/lkjson/))
 
-Example:
+### Object-Pascal Example
 
 ```pascal
 uses
@@ -62,6 +62,49 @@ Will produce `\test\example.json`:
     2,
     3
   ]
+}
+```
+
+### C++Builder Example
+
+```C++
+bool Test99(String& Msg)
+{
+  bool Result;
+  TMcJsonItem* Json = NULL;
+  Msg = "Test: Github readme.md content";
+  Json = new TMcJsonItem();
+  try
+  {
+    try
+    { // add some pairs.
+      Json->Add("key1")->AsInteger = 1;
+      Json->Add("key2")->AsBoolean = True;
+      Json->Add("key3")->AsNumber  = 1.234;
+      Json->Add("key4")->AsString  = "value 1";
+      // add an array
+      Json->Add("array")->ItemType = jitArray;
+      for (int i = 1; i < 3 ; i++)
+        Json->Childs["array"]->Add()->AsInteger = i;
+      // save and load
+      Json->SaveToFile("example.json");
+      Json->LoadFromFile("example.json");
+      // remove an item
+      Json->Remove("array");
+      // test final result
+      Result = (Json->AsJSON ==
+                "{\"key1\": 1,\"key2\": true,\"key3\": 1.234,\"key4\": \"value 1\"}");
+    }
+    catch(...)
+    {
+      Result = false;
+    }
+  }
+  __finally
+  {
+    if (Json) delete (Json);
+  }
+  return (Result);
 }
 ```
 
