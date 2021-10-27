@@ -142,8 +142,8 @@ JsonTools  |   48.00s | .70s | 39.00s | 40.00s |   .48s |
 * Parse using: `JsonP->Code = Json->getJSON()`.
 
 ### Notes about `LkJson`
-* Good performance generating and parsing and even better with random access due to HashTable.
-* TLkJSONBase and other derivated classes forces to cast objects using the "as" operator. In C++Builder, this requires `dynamic_cast` making the code verbosy.
+* Good performance generating and parsing and even better with random access due to "Balanced Search Tree" `TlkBalTree`.
+* TLkJSONBase and other derivated classes force to cast objects using the "as" operator. In C++Builder, this requires `dynamic_cast` making the code verbosy.
 * Generate using: `Json->Add("key", "value")`.
 * Parse using: `JsonP = dynamic_cast<TlkJSONObject*>(TlkJSON::ParseText(NULL, TlkJSON::GenerateText(NULL, Json)))`.
 
@@ -156,5 +156,6 @@ JsonTools  |   48.00s | .70s | 39.00s | 40.00s |   .48s |
 
 ### Notes about `McJSON`
 * Good performance, but not better about random access due to the use of TList.
+* Simple and smart interface using "AsXXX" getters and setters (not invented here).
 * Generate using: `Json->Add("key")->AsString = "value"`.
 * Parse using: `JsonP->AsJSON = Json->AsJSON`.
