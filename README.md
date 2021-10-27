@@ -121,7 +121,7 @@ Library    | Generate | Save | Parse  | Load   | Access |
 -----------|----------|------|--------|--------|--------|
 myJSON     |   50.00s | .07s | 5.1min | 7.7min |  1.60s |
 LkJson     |     .30s | .13s |   .47s |   .36s |   .00s |
-**McJSON   |     .08s | .09s |   .11s |   .16s |   .70s |
+**McJSON** |     .08s | .09s |   .11s |   .16s |   .70s |
 
 ### Notes about `myJSON`:
 * Performance deteriored due the recurrent use of wsTrim().
