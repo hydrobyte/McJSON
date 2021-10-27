@@ -11,7 +11,7 @@ Some points of interest:
  * Inspired on [badunius/myJSON](https://github.com/badunius/myJSON).
  * Performance compared with:
    *  [myJSON](https://github.com/badunius/myJSON) 
-   *  [LkJson](https://sourceforge.net/projects/lkjson/))
+   *  [LkJson](https://sourceforge.net/projects/lkjson/)
    *  [JsonTools](https://github.com/sysrpl/JsonTools)
 
 ### Object-Pascal Example
