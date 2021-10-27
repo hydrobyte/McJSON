@@ -77,6 +77,8 @@ Will produce `\test\example.json`:
 ### C++Builder Example
 
 ```C++
+#include "McJson.hpp"
+...
 bool Test99(AnsiString& Msg)
 {
   bool Result;
