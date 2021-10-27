@@ -3,13 +3,19 @@ A **Delphi / Lazarus / C++Builder** simple and small class for fast JSON parsing
 
 ## Motivation
 Some points of interest:
- * Object-pascal native code using only TList.
- * Compatible from Delphi 7 up to now.
- * Compatible from Lazarus.
- * Compatible from C++Builder 2006 up to now.
+ * Simple Object-Pascal native code using TList as internal data structure.
+ * String single-pass parser. 
+ * Compatible (aimed):
+   * Delphi 7 up to now.
+   * Lazarus.
+   * C++Builder 2006 up to now.
+ * Tested with:
+   * BDS 2006 (Delphi and BCP)
+   * Lazarus 2.3.0 (FPC 3.2.2)
+   * C++Builder 10.2.
  * Just one unit, just one class.
- * Inspired on [badunius/myJSON](https://github.com/badunius/myJSON).
- * Performance teste with C++Builder comparing:
+ * Inspired by [badunius/myJSON](https://github.com/badunius/myJSON).
+ * Performance test using C++Builder and comparing:
    *  [myJSON](https://github.com/badunius/myJSON) 
    *  [LkJson](https://sourceforge.net/projects/lkjson/)
    *  [JsonTools](https://github.com/sysrpl/JsonTools)
@@ -111,7 +117,7 @@ bool Test99(AnsiString& Msg)
 ```
 
 ## Performance
-A teste comparation have been done with the original myJSON and LkJson units:
+A teste comparation have been done with the original myJSON, LkJson and JsonTools units:
 * Generate a JSON with 50k items
 * Save to file
 * Parse from memory (copy object forcing a parse) 
@@ -127,23 +133,25 @@ LkJson     |     .30s | .13s |   .47s |   .36s |   .00s |
 JsonTools  |   48.00s | .70s | 39.00s | 40.00s |   .48s |
 **McJSON** |     .08s | .09s |   .11s |   .16s |   .70s |
 
-### Notes about `myJSON`:
+### Notes about `myJSON`
 * Performance deteriored due the recurrent use of wsTrim().
 * Generate using: `Json->Item["key"]->setStr("value")`.
 * Parse using: `JsonP->Code = Json->getJSON()`.
 
-### Notes about `LkJson`:
+### Notes about `LkJson`
 * Good performance generating and parsing and even better with random access due to HashTable.
 * TLkJSONBase and other derivated classes forces to cast objects using the "as" operator. In C++Builder, this requires `dynamic_cast` making the code verbosy.
 * Generate using: `Json->Add("key", "value")`.
 * Parse using: `JsonP = dynamic_cast<TlkJSONObject*>(TlkJSON::ParseText(NULL, TlkJSON::GenerateText(NULL, Json)))`.
 
-### Notes about `JsonTools`:
-* Very nice and interesting code focused on the concept of Tokens. Also uses TList as internal data structure. It needs a performance review.
+### Notes about `JsonTools`
+* Very nice and interesting code focused on the concept of Tokens. 
+* Also uses TList as internal data structure. 
+* It needs a performance review.
 * Generate using: `Json->Add("key", "value")`.
 * Parse using: `JsonP->Value = Json->AsJson`.
 
-### Notes about `McJSON`:
+### Notes about `McJSON`
 * Good performance, but not better about random access due to the use of TList.
 * Generate using: `Json->Add("key")->AsString = "value"`.
 * Parse using: `JsonP->AsJSON = Json->AsJSON`.
