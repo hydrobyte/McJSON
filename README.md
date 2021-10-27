@@ -89,12 +89,12 @@ bool Test99(AnsiString& Msg)
   { try
     { // add some pairs.
       Json->Add("key1")->AsInteger = 1;
-      Json->Add("key2")->AsBoolean = True;
+      Json->Add("key2")->AsBoolean = true;
       Json->Add("key3")->AsNumber  = 1.234;
       Json->Add("key4")->AsString  = "value 1";
       // add an array
       Json->Add("array")->ItemType = jitArray;
-      for (int i = 1; i < 3 ; i++)
+      for (int i = 1; i <= 3 ; i++)
         Json->Childs["array"]->Add()->AsInteger = i;
       // save and load
       Json->SaveToFile("example.json");
@@ -156,7 +156,7 @@ JsonTools  |   48.00s | .70s | 39.00s | 40.00s |   .48s |
 * Parse using: `JsonP->Value = Json->AsJson`.
 
 ### Notes about `McJSON`
-* Good performance, but not better about random access due to the use of TList.
+* Good performance, but not the better about random access due to the use of TList.
 * Simple and smart interface using "AsXXX" getters and setters (not invented here).
 * Generate using: `Json->Add("key")->AsString = "value"`.
 * Parse using: `JsonP->AsJSON = Json->AsJSON`.
