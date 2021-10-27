@@ -1,15 +1,15 @@
 # McJSON
-A Delphi/Lazarus/C++Builder small class for fast JSON parsing.
+A **Delphi / Lazarus / C++Builder** simple and small class for fast JSON parsing.
 
 ## Origin
 Some points of interest:
- * Object-pascal native code, using classes only TList.
- * Compatible with Delphi 7 up to now.
- * Compatible with Lazarus.
- * Compatible with C++Builder 2006 up to now.
+ * Object-pascal native code using only TList.
+ * Compatible from Delphi 7 up to now.
+ * Compatible from Lazarus.
+ * Compatible from C++Builder 2006 up to now.
  * Just one unit, just one class.
  * Inspired on [badunius/myJSON](https://github.com/badunius/myJSON).
- * Compared with "JSON Delphi libray" ([LkJson](https://sourceforge.net/projects/lkjson/))
+ * Performance compared with [myJSON](https://github.com/badunius/myJSON) and "JSON Delphi libray" ([LkJson](https://sourceforge.net/projects/lkjson/))
 
 Example:
 
@@ -66,14 +66,27 @@ Will produce `\test\example.json`:
 ```
 
 ## Performance
-A teste comparation have been done with the original myJSON and LkJson
-- Generate 50k items json
-- Save to file
-- Load from file (parsing)
-- Access 1k items randomly
+A teste comparation have been done with the original myJSON and LkJson units:
+* Generate a JSON with 50k items
+* Save to file
+* Parse from memory (copy object forcing a parse) 
+* Load from file (and parsing)
+* Access 1k items randomly
 
-Lib        | Generate | Save | Load | Parse | Access |
------------|----------|------|------|-------|--------|
-LkJson     |     .85s | .15s | . 34s|    1s |     1s |
-MyJSON     |     .85s | .15s | . 34s|    2s |     1s |
-**McJSON** |     .09s | .14s | . 14s|    3s |     1s |
+The next table summarizes the results:
+
+Library    | Generate | Save | Parse  | Load   | Access |
+-----------|----------|------|--------|--------|--------|
+myJSON     |   50.00s | .07s | 5.1min | 7.7min |  1.60s |
+LkJson     |     .30s | .13s |   .47s |   .36s |   .00s |
+**McJSON   |     .08s | .09s |   .11s |   .16s |   .70s |
+
+Notes about `LkJson`:
+* Good performance generating and parsing and even better with random access due to HashTable.
+* TLkJSONBase and other derivated classes forces to cast objects using the "as" operator. In C++Builder, this requires `dynamic_cast` making the code verbosy.
+
+Notes about `myJSON`:
+* Performance deteriored due the recurrent use of wsTrim().
+
+Notes about `McJSON`:
+* Good performance, but not better, with random access due to the use of TList.
