@@ -70,9 +70,10 @@ A teste comparation have been done with the original myJSON and LkJson
 - Generate 50k items json
 - Save to file
 - Load from file (parsing)
+- Access 1k items randomly
 
-Lib        | Generate | Save | Load | Parse |
------------|----------|------|------|-------|
-LkJson     |     .85s | .15s | . 34s|    1s |
-MyJSON     |     .85s | .15s | . 34s|    2s |
-**McJSON** |     .09s | .14s | . 14s|    3s |
+Lib        | Generate | Save | Load | Parse | Access |
+-----------|----------|------|------|-------|--------|
+LkJson     |     .85s | .15s | . 34s|    1s |     1s |
+MyJSON     |     .85s | .15s | . 34s|    2s |     1s |
+**McJSON** |     .09s | .14s | . 14s|    3s |     1s |
