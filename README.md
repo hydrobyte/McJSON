@@ -118,11 +118,12 @@ bool Test99(AnsiString& Msg)
 
 ## Performance
 A teste comparation have been done with the original myJSON, LkJson and JsonTools units:
-* Generate a JSON with 50k items
-* Save to file
-* Parse from memory (copy object forcing a parse) 
-* Load from file (and parsing)
-* Access 1k items randomly
+* Generate a JSON with 50k items.
+* Save to file.
+* Parse from memory (copy object forcing a parse).
+* Load from file (and parsing).
+* Access 1k items randomly.
+* Very old 32 bits machine: Intel Core 2 CPU T5500 1.66GHz 4 GB RAM.
 
 The next table summarizes the results:
 
