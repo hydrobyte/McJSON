@@ -66,12 +66,13 @@ Will produce `\test\example.json`:
 ```
 
 ## Performance
-A teste comparation have been done with LkJson
+A teste comparation have been done with the original myJSON and LkJson
 - Generate 50k items json
 - Save to file
 - Load from file (parsing)
 
-Lib    | Generate    | Save | Parse
+Lib    | Generate    | Save | Load | Parse
 -------|----- | -----|--------
-LkJson | .85s | .15s | . 34s|
-McJSON | .09s | .14s | . 14s|
+LkJson     | .85s | .15s | . 34s| |
+MyJSON     | .85s | .15s | . 34s| |
+**McJSON** | .09s | .14s | . 14s| |
