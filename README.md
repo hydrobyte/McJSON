@@ -7,7 +7,8 @@ Some points of interest:
  - Compatible with Delphi 7 up to now.
  - Compatible with Lazarus.
  - Compatible with C++Builder 2006 up to now.
- - Inspired on badunius/myJSON
+ - Just one unit, just one class.
+ - Inspired on badunius/myJSON.
  - Compared with "JSON Delphi libray" (LkJson)
 
 Example:
@@ -62,3 +63,10 @@ Will produce `example.json:
     3
   ]
 }
+```
+
+## Performance
+A teste comparation have been done with LkJson
+- Generate 50k items json
+- Save to file
+- Load from file (parsing)
