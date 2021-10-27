@@ -81,12 +81,12 @@ myJSON     |   50.00s | .07s | 5.1min | 7.7min |  1.60s |
 LkJson     |     .30s | .13s |   .47s |   .36s |   .00s |
 **McJSON   |     .08s | .09s |   .11s |   .16s |   .70s |
 
+### Notes about `myJSON`:
+* Performance deteriored due the recurrent use of wsTrim().
+
 ### Notes about `LkJson`:
 * Good performance generating and parsing and even better with random access due to HashTable.
 * TLkJSONBase and other derivated classes forces to cast objects using the "as" operator. In C++Builder, this requires `dynamic_cast` making the code verbosy.
-
-### Notes about `myJSON`:
-* Performance deteriored due the recurrent use of wsTrim().
 
 ### Notes about `McJSON`:
 * Good performance, but not better, with random access due to the use of TList.
