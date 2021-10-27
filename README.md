@@ -3,13 +3,13 @@ A Delphi/Lazarus/C++Builder small class for fast JSON parsing.
 
 ## Origin
 Some points of interest:
- - Object-pascal native code, using classes only TList.
- - Compatible with Delphi 7 up to now.
- - Compatible with Lazarus.
- - Compatible with C++Builder 2006 up to now.
- - Just one unit, just one class.
- - Inspired on badunius/myJSON.
- - Compared with "JSON Delphi libray" (LkJson)
+ * Object-pascal native code, using classes only TList.
+ * Compatible with Delphi 7 up to now.
+ * Compatible with Lazarus.
+ * Compatible with C++Builder 2006 up to now.
+ * Just one unit, just one class.
+ * Inspired on [badunius/myJSON](https://github.com/badunius/myJSON).
+ * Compared with "JSON Delphi libray" ([LkJson](https://sourceforge.net/projects/lkjson/))
 
 Example:
 
@@ -70,3 +70,8 @@ A teste comparation have been done with LkJson
 - Generate 50k items json
 - Save to file
 - Load from file (parsing)
+
+Lib    | Generate    | Save | Parse
+-------|----- | -----|--------
+LkJson | .85s | .15s | . 34s|
+McJSON | .09s | .14s | . 14s|
