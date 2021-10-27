@@ -13,6 +13,9 @@ Some points of interest:
 Example:
 
 ```pascal
+uses
+  McJSON;
+...  
 function Test99(out Msg: string): Boolean;
 var
   Json: TMcJsonItem;
