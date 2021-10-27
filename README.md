@@ -9,7 +9,10 @@ Some points of interest:
  * Compatible from C++Builder 2006 up to now.
  * Just one unit, just one class.
  * Inspired on [badunius/myJSON](https://github.com/badunius/myJSON).
- * Performance compared with [myJSON](https://github.com/badunius/myJSON) and "JSON Delphi libray" ([LkJson](https://sourceforge.net/projects/lkjson/))
+ * Performance compared with:
+   *  [myJSON](https://github.com/badunius/myJSON) 
+   *  [LkJson](https://sourceforge.net/projects/lkjson/))
+   *  [JsonTools](https://github.com/sysrpl/JsonTools)
 
 ### Object-Pascal Example
 
@@ -121,6 +124,7 @@ Library    | Generate | Save | Parse  | Load   | Access |
 -----------|----------|------|--------|--------|--------|
 myJSON     |   50.00s | .07s | 5.1min | 7.7min |  1.60s |
 LkJson     |     .30s | .13s |   .47s |   .36s |   .00s |
+JsonTools  |   48.00s | .70s | 39.00s | 40.00s |   .48s |
 **McJSON** |     .08s | .09s |   .11s |   .16s |   .70s |
 
 ### Notes about `myJSON`:
@@ -130,5 +134,8 @@ LkJson     |     .30s | .13s |   .47s |   .36s |   .00s |
 * Good performance generating and parsing and even better with random access due to HashTable.
 * TLkJSONBase and other derivated classes forces to cast objects using the "as" operator. In C++Builder, this requires `dynamic_cast` making the code verbosy.
 
+### Notes about `JsonTools`:
+* Very nice and interesting code focused on the concept of Tokens. Also uses TList as internal data structure. It needs a performance review.
+
 ### Notes about `McJSON`:
-* Good performance, but not better, with random access due to the use of TList.
+* Good performance, but not better about random access due to the use of TList.
