@@ -68,15 +68,14 @@ Will produce `\test\example.json`:
 ### C++Builder Example
 
 ```C++
-bool Test99(String& Msg)
+bool Test99(AnsiString& Msg)
 {
   bool Result;
   TMcJsonItem* Json = NULL;
   Msg = "Test: Github readme.md content";
   Json = new TMcJsonItem();
   try
-  {
-    try
+  { try
     { // add some pairs.
       Json->Add("key1")->AsInteger = 1;
       Json->Add("key2")->AsBoolean = True;
