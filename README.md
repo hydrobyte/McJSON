@@ -1,9 +1,7 @@
 # McJSON
---------
 A Delphi/Lazarus/C++Builder small class for fast JSON parsing.
 
-# Origin
---------
+## Origin
 Some points of interest:
  . Object-pascal native code, using classes only TList.
  . Compatible with Delphi 7 up to now.
