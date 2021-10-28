@@ -19,6 +19,7 @@ Some points of interest:
    *  [myJSON](https://github.com/badunius/myJSON) 
    *  [LkJson](https://sourceforge.net/projects/lkjson/)
    *  [JsonTools](https://github.com/sysrpl/JsonTools)
+   *  [uJSON](https://sourceforge.net/projects/is-webstart/) (Delphi Web Utils)
 
 ### Object-Pascal Example
 
@@ -143,6 +144,7 @@ Library    | Generate | Save | Parse  | Load   | Access |
 `myJSON`   |   50.00s | .07s | 5.1min | 7.7min |  1.60s |
 `LkJson`   |     .30s | .13s |   .47s |   .36s |   .00s |
 `JsonTools`|   48.00s | .70s | 39.00s | 40.00s |   .48s |
+`uJSON`    |   48.00s | .70s | 39.00s | 40.00s |   .48s |
 `McJSON`   |     .08s | .09s |   .11s |   .16s |   .54s |
 
 [^1]: Metric: average time in seconds (s) for 5 consecutive executions. Some results converted to minutes (min).
@@ -164,6 +166,16 @@ Library    | Generate | Save | Parse  | Load   | Access |
 * It needs a performance review.
 * Generate using: `Json->Add("key", "value")`.
 * Parse using: `JsonP->Value = Json->AsJson`.
+
+### Notes about `uJSON`
+* Less verbosy in C++ than `LkJson`, but the colection of classes also will force casting with `dynamic_cast`.
+* Uses TStringList as a "Hash Map" [string] -> [object address]. The comas here is because I think the string entry is not a true hash within TStringList.
+* In some aspectes, the methods interface might became puzzling.
+* It needs a performance review.
+* This unit is used in other projects, e.g. [Diffbot API Delphi Client Library](https://github.com/diffbot/diffbot-delphi-client)
+* Generate using: `Json->put("key", "value")`.
+* Parse using: `JsonP = new TuJSONObject(Json->toString())`.
+* `SaveToFile` doesn't exist, so it has used `TStringList->SaveToFile()` after filling `Text` with `Json->toString()`.
 
 ### Notes about `McJSON`
 * Good performance, but not the better about random access due to the use of TList.
