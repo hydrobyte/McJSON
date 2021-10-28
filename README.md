@@ -144,10 +144,11 @@ Library    | Generate | Save | Parse  | Load   | Access |
 `myJSON`   |   50.00s | .07s | 5.1min | 7.7min |  1.60s |
 `LkJson`   |     .30s | .13s |   .47s |   .36s |   .00s |
 `JsonTools`|   48.00s | .70s | 39.00s | 40.00s |   .48s |
-`uJSON`    |   48.00s | .70s | 39.00s | 40.00s |   .48s |
+`uJSON`[^2]|   48.00s | .70s | 39.00s | 40.00s |   .48s |
 `McJSON`   |     .08s | .09s |   .11s |   .16s |   .54s |
 
 [^1]: Metric: average time in seconds (s) for 5 consecutive executions. Some results converted to minutes (min).
+[^2]: For `uJSON` 50k items was too much. After wayting for 1 hour, I've decided to downgrade and test 25k items.
 
 ### Notes about `myJSON`
 * Performance deteriored due the recurrent use of wsTrim().
@@ -174,7 +175,7 @@ Library    | Generate | Save | Parse  | Load   | Access |
 * It needs a performance review.
 * This unit is used in other projects, e.g. [Diffbot API Delphi Client Library](https://github.com/diffbot/diffbot-delphi-client)
 * Generate using: `Json->put("key", "value")`.
-* Parse using: `JsonP = new TuJSONObject(Json->toString())`.
+* Parse using: `JsonP = new TJSONObject(Json->toString())`.
 * `SaveToFile` doesn't exist, so it has used `TStringList->SaveToFile()` after filling `Text` with `Json->toString()`.
 
 ### Notes about `McJSON`
