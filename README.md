@@ -15,7 +15,7 @@ Some points of interest:
    * C++Builder 10.2.
  * Just one unit, just one class.
  * Inspired by [badunius/myJSON](https://github.com/badunius/myJSON).
- * Performance test using C++Builder and comparing:
+ * Performance [tests](#performance-tests) using C++Builder and comparing:
    *  [myJSON](https://github.com/badunius/myJSON) 
    *  [LkJson](https://sourceforge.net/projects/lkjson/)
    *  [JsonTools](https://github.com/sysrpl/JsonTools)
@@ -48,7 +48,7 @@ begin
       Json.SaveToFile('example.json');
       Json.LoadFromFile('example.json');
       // remove an item
-      Json.Remove('array');
+      Json.Delete('array');
       // test final result
       Result := (Json.AsJSON = '{"key1": 1,"key2": true,"key3": 1.234,"key4": "value 1"}');
     except
@@ -95,12 +95,12 @@ bool Test99(AnsiString& Msg)
       // add an array
       Json->Add("array")->ItemType = jitArray;
       for (int i = 1; i <= 3 ; i++)
-        Json->Childs["array"]->Add()->AsInteger = i;
+        Json->Items["array"]->Add()->AsInteger = i;
       // save and load
       Json->SaveToFile("example.json");
       Json->LoadFromFile("example.json");
       // remove an item
-      Json->Remove("array");
+      Json->Delete("array");
       // test final result
       Result = (Json->AsJSON ==
                 "{\"key1\": 1,\"key2\": true,\"key3\": 1.234,\"key4\": \"value 1\"}");
@@ -118,7 +118,7 @@ bool Test99(AnsiString& Msg)
 }
 ```
 
-## Performance
+## Performance Tests
 A test comparation have been done with the original `myJSON`, `LkJson` and `JsonTools` units:
 * C++Builder VCL examples built with BDS 2006 (the older version I have).
 * Generate a JSON with 50k items.
@@ -132,9 +132,9 @@ The next table summarizes the results[^1]:
 
 Library    | Generate | Save | Parse  | Load   | Access |
 :----------|---------:|-----:|-------:|-------:|-------:|
-myJSON     |   50.00s | .07s | 5.1min | 7.7min |  1.60s |
-LkJson     |     .30s | .13s |   .47s |   .36s |   .00s |
-JsonTools  |   48.00s | .70s | 39.00s | 40.00s |   .48s |
+`myJSON`   |   50.00s | .07s | 5.1min | 7.7min |  1.60s |
+`LkJson`   |     .30s | .13s |   .47s |   .36s |   .00s |
+`JsonTools`|   48.00s | .70s | 39.00s | 40.00s |   .48s |
 **McJSON** |     .08s | .09s |   .11s |   .16s |   .70s |
 
 [^1]: Metric: average time in seconds (s) for 5 consecutive executions. Some results converted to minutes (min).
