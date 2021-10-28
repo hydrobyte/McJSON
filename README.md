@@ -139,16 +139,17 @@ Here is a summary of the tests.
 
 The next table summarizes the results[^1]:
 
-Library    | Generate | Save | Parse  | Load   | Access |
-:----------|---------:|-----:|-------:|-------:|-------:|
-`myJSON`   |   50.00s | .07s | 5.1min | 7.7min |  1.60s |
-`LkJson`   |     .30s | .13s |   .47s |   .36s |   .00s |
-`JsonTools`|   48.00s | .70s | 39.00s | 40.00s |   .48s |
-`uJSON`[^2]|   48.00s | .70s | 39.00s | 40.00s |   .48s |
-`McJSON`   |     .08s | .09s |   .11s |   .16s |   .54s |
+Library    | Generate  | Save     | Parse    | Load     | Access  | Total      |
+:----------|----------:|---------:|---------:|---------:|--------:|-----------:|
+`McJSON`   |     .08 s |    .09 s |    .11 s |    .16 s |   .54 s |     1.05 s |
+`LkJson`   |     .30 s |    .13 s |    .47 s |    .36 s |   .00 s |     1.22 s |
+`JsonTools`|   48.00 s |    .70 s |  39.00 s |  40.00 s |   .48 s |    1.2 min |
+`myJSON`   |   50.00 s |    .07 s |  5.1 min |  7.7 min |  1.60 s |   13.1 min |
+`uJSON`[^2]|  18.6 min | 20.1 min | 17.5 min |   4.31 s | 53.02 s |   57.6 min |
 
-[^1]: Metric: average time in seconds (s) for 5 consecutive executions. Some results converted to minutes (min).
-[^2]: For `uJSON` 50k items were too much. After waiting for 1 hour, I've decided to downgrade and test 25k items.
+
+[^1]: Metric: average time in seconds (s) for 5 consecutive executions. Total is the average of partial tests. Some results converted to minutes (min).
+[^2]: With `uJSON`, there seems to be a performance problem related to `toString()`.
 
 ### Notes about `myJSON`
 * Performance deteriored due the recurrent use of wsTrim().
