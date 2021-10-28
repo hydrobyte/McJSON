@@ -68,7 +68,7 @@ type
 
     property Keys  [aIdx: Integer]: string      read fGetKey;
     property Values[aIdx: Integer]: TMcJsonItem read fGetItemByIdx;
-    property Childs[aKey: string ]: TMcJsonItem read fGetItemByKey; default;
+    property Items [aKey: string ]: TMcJsonItem read fGetItemByKey; default;
 
     property HasChild: Boolean read fHasChild;
     property IsNull  : Boolean read fIsNull;
@@ -94,8 +94,8 @@ type
     function Add(const aItem: TMcJsonItem): TMcJsonItem; overload;
     function Copy(const aItem: TMcJsonItem): TMcJsonItem; overload;
     function Clone: TMcJsonItem; overload;
-    function Remove(aIdx: Integer): Boolean; overload;
-    function Remove(const aKey: string): Boolean; overload;
+    function Delete(aIdx: Integer): Boolean; overload;
+    function Delete(const aKey: string): Boolean; overload;
     function HasKey(const aKey: string): Boolean;
     function IsEqual(const aItem: TMcJsonItem): Boolean;
     function Check(const aStr: string; aSpeedUp: Boolean = False): Boolean;
@@ -184,11 +184,10 @@ begin
           n := 1;
       end;
     // control '"' for keys and string values.
+    // if not escaped, toggle opn status
     if (n = 1) and (aStr[i] = '"') then
     begin
-      if opn
-        then opn := false
-        else opn := true;
+      opn := not opn;
     end;
     // ignore whitespaces chars
     if not (opn) and (aStr[i] in WHITESPACE) then
@@ -222,8 +221,7 @@ function TMcJsonItem.fGetKey(aIdx: Integer): string;
 var
   aItem: TMcJsonItem;
 begin
-  // return the key of the Nth child
-  // works according to the fGetItemByIdx principle and with its help
+  // return the key of the idx-th child
   Result := '';
   aItem := fGetItemByIdx(aIdx);
   if (aItem <> nil) then
@@ -233,8 +231,7 @@ end;
 function TMcJsonItem.fGetType(): TJItemType;
 begin
   Result := jitUnset;
-  if (Self = nil) then
-    Exit;
+  if (Self = nil) then Error(SItemNil);
   Result := fType;
 end;
 
@@ -244,8 +241,7 @@ var
 begin
   Result := nil;
   // check
-  if (Self = nil) then
-    Exit;
+  if (Self = nil) then Error(SItemNil);
   // find index of item with aKey
   idx := Self.IndexOf(aKey);
   if (idx >= 0) then
@@ -257,8 +253,7 @@ begin
   // Item type is not changed, unlike fGetItemByKey
   Result := nil;
   // check
-  if (Self = nil) then
-    Exit;
+  if (Self = nil) then Error(SItemNil);
   // type compatibility check
   if (fType <> jitObject) and
      (fType <> jitArray ) then
@@ -280,7 +275,7 @@ end;
 function TMcJsonItem.fIsNull: Boolean;
 begin
   if (Self = nil) then Error(SItemNil);
-  Result := fValType = jvtNull;
+  Result := ( fValType = jvtNull );
 end;
 
 function TMcJsonItem.fGetAsJSON(): string;
@@ -291,7 +286,6 @@ end;
 
 function TMcJsonItem.fGetAsObject: TMcJsonItem;
 begin
-  // check
   if      (Self = nil        ) then Error(SItemNil)
   else if (fType <> jitObject) then Error(SItemTypeInvalid);
   // return a compatible value type
@@ -300,7 +294,6 @@ end;
 
 function TMcJsonItem.fGetAsArray: TMcJsonItem;
 begin
-  // check
   if      (Self = nil       ) then Error(SItemNil)
   else if (fType <> jitArray) then Error(SItemTypeInvalid);
   // return a compatible value type
@@ -312,7 +305,6 @@ var
   Ans: Integer;
 begin
   Ans := 0;
-  // check
   if      (Self = nil       ) then Error(SItemNil)
   else if (fType <> jitValue) then Error(SItemTypeInvalid);
   // return a compatible value type
@@ -333,7 +325,6 @@ var
   Ans: Double;
 begin
   Ans := 0.0;
-  // check
   if      (Self = nil       ) then Error(SItemNil)
   else if (fType <> jitValue) then Error(SItemTypeInvalid);
   // return a compatible value type
@@ -352,7 +343,6 @@ end;
 
 function TMcJsonItem.fGetAsString: string;
 begin
-  // check
   if      (Self = nil       ) then Error(SItemNil)
   else if (fType <> jitValue) then Error(SItemTypeInvalid);
   // return fValue that is string already
@@ -365,7 +355,6 @@ var
   Ans: Boolean;
 begin
   Ans := False;
-  // check
   if      (Self = nil       ) then Error(SItemNil)
   else if (fType <> jitValue) then Error(SItemTypeInvalid);
   // return a compatible value type
@@ -384,7 +373,6 @@ end;
 
 function TMcJsonItem.fGetAsNull: string;
 begin
-  // check
   if      (Self = nil       ) then Error(SItemNil)
   else if (fType <> jitValue) then Error(SItemTypeInvalid);
   // return fValue that is string already
@@ -396,8 +384,7 @@ procedure TMcJsonItem.fSetType(aType: TJItemType);
 var
   i: Integer;
 begin
-  if (Self = nil) then
-    Exit;
+  if (Self = nil) then Error(SItemNil);
   // if an array or object is converted to a number, clear all descendants
   if (aType = jitValue) and (fType <> jitValue) then
   begin
@@ -436,7 +423,6 @@ end;
 
 procedure TMcJsonItem.fSetAsObject(aValue: TMcJsonItem);
 begin
-  // check
   if (Self  = nil) then Error(SItemNil);
   // if unset, set as value
   if (fType <> jitObject) then fSetType(jitObject);
@@ -446,7 +432,6 @@ end;
 
 procedure TMcJsonItem.fSetAsArray(aValue: TMcJsonItem);
 begin
-  // check
   if (Self  = nil) then Error(SItemNil);
   // if unset, set as value
   if (fType <> jitArray) then fSetType(jitArray);
@@ -456,7 +441,6 @@ end;
 
 procedure TMcJsonItem.fSetAsInteger(aValue: Integer);
 begin
-  // check
   if  (Self  = nil       ) then Error(SItemNil);
   if ((fType <> jitUnset ) and
       (fType <> jitValue)) then Error(SItemTypeInvalid);
@@ -469,7 +453,6 @@ end;
 
 procedure TMcJsonItem.fSetAsDouble(aValue: Double);
 begin
-  // check
   if  (Self  = nil       ) then Error(SItemNil);
   if ((fType <> jitUnset ) and
       (fType <> jitValue)) then Error(SItemTypeInvalid);
@@ -482,7 +465,6 @@ end;
 
 procedure TMcJsonItem.fSetAsString(aValue: string);
 begin
-  // check
   if  (Self  = nil       ) then Error(SItemNil);
   if ((fType <> jitUnset ) and
       (fType <> jitValue)) then Error(SItemTypeInvalid);
@@ -495,7 +477,6 @@ end;
 
 procedure TMcJsonItem.fSetAsBoolean(aValue: Boolean);
 begin
-  // check
   if  (Self  = nil       ) then Error(SItemNil);
   if ((fType <> jitUnset ) and
       (fType <> jitValue)) then Error(SItemTypeInvalid);
@@ -510,7 +491,6 @@ end;
 
 procedure TMcJsonItem.fSetAsNull(aValue: string);
 begin
-  // check
   if  (Self  = nil       ) then Error(SItemNil);
   if ((fType <> jitUnset ) and
       (fType <> jitValue)) then Error(SItemTypeInvalid);
@@ -569,8 +549,7 @@ begin
   end;
 
   // valid-JSON 
-  if (c > len) then
-    Error(SParsingError);
+  if (c > len) then Error(SParsingError);
 
   Self.fSetType(jitValue);
   Self.fValType := jvtString;
@@ -703,7 +682,10 @@ begin
     len  := 4;
     sAux := System.Copy(aCode, aPos, len);
     if LowerCase(sAux) = 'true' then
-      Self.fValue := 'true';
+      Self.fValue := 'true'
+    else
+      // valid-JSON
+      Error(SParsingError);
   end
   // check boolean value 'false'
   else if (aCode[aPos] = 'f') or
@@ -712,7 +694,10 @@ begin
     len  := 5;
     sAux := System.Copy(aCode, aPos, len);
     if LowerCase(sAux) = 'false' then
-      Self.fValue := 'false';
+      Self.fValue := 'false'
+    else
+      // valid-JSON
+      Error(SParsingError);
   end;
   // set item and value types
   if (len > 0) then
@@ -737,7 +722,10 @@ begin
     len  := 4;
     sAux := System.Copy(aCode, aPos, len);
     if LowerCase(sAux) = 'null' then
-      Self.fValue := 'null';
+      Self.fValue := 'null'
+    else
+      // valid-JSON
+      Error(SParsingError);
   end;
   // set item and value types
   if (len > 0) then
@@ -754,10 +742,7 @@ end;
 
 constructor TMcJsonItem.Create;
 begin
-  fChild := TList.Create;
-  // Should've set initial values
-  // But root node don't need them and child node will get them on parsing
-  // from setter or when they are called for the first time
+  fChild   := TList.Create;
   fType    := jitUnset;
   fSpeedUp := True;
 end;
@@ -808,8 +793,7 @@ begin
   idx    := -1;
   Result := idx;
   // check
-  if (Self = nil) then
-    Exit;
+  if  (Self = nil) then Error(SItemNil);
   // looking for an element
   for i := 0 to (fChild.Count - 1) do
   begin
@@ -831,8 +815,8 @@ var
 begin
   if (Self = nil) then Error(SItemNil);
   // check unset item
-  if fType = jitUnset
-    then fSetType(jitObject);
+  if (fType = jitUnset) then
+    fSetType(jitObject);
   // create a new item with aKey and add it.
   aItem := TMcJsonItem.Create;
   aItem.fKey := aKey;
@@ -845,8 +829,8 @@ function TMcJsonItem.Add(const aItem: TMcJsonItem): TMcJsonItem;
 begin
   if (Self = nil) then Error(SItemNil);
   // check unset item
-  if fType = jitUnset
-    then fSetType(jitObject);
+  if (fType = jitUnset) then
+    fSetType(jitObject);
   // add item.
   fChild.Add(aItem);
   // result aItem to permit chain
@@ -874,7 +858,7 @@ begin
   Result := aItem;
 end;
 
-function TMcJsonItem.Remove(aIdx: Integer): Boolean;
+function TMcJsonItem.Delete(aIdx: Integer): Boolean;
 var
   Size: Integer;
   aItemDel: TMcJsonItem;
@@ -903,7 +887,7 @@ begin
   Result := Ans;
 end;
 
-function TMcJsonItem.Remove(const aKey: string): Boolean;
+function TMcJsonItem.Delete(const aKey: string): Boolean;
 var
   Ans: Boolean;
   idx: Integer;
@@ -913,7 +897,7 @@ begin
   // find index of item with aKey
   idx := Self.IndexOf(aKey);
   if (idx >= 0) then
-    Ans := Self.Remove(idx);
+    Ans := Self.Delete(idx);
   Result := Ans;
 end;
 
@@ -978,9 +962,9 @@ function TMcJsonItem.ToString(aHuman: Boolean; const aIndent: string): string;
     for i := 0 to len do
     begin
       Result := Result + TMcJsonItem(fChild.Items[i]).ToString(aHuman, aNewInd);
-      if i < len
-      then Result := Result + ',' + sNL
-      else Result := Result + sNL + aIndent;
+      if (i < len)
+        then Result := Result + ',' + sNL
+        else Result := Result + sNL + aIndent;
     end;
   end;
 
