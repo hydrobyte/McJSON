@@ -461,31 +461,3 @@ begin
   RunTests;
   Readln;
 end.
-
-//function Test99(out Msg: string): Boolean;
-//var
-//  Json: TMcJsonItem;
-//  I: Integer;
-//begin
-//  Msg := 'Test: Github readme.md content';
-//  Json := TMcJsonItem.Create();
-//  try
-//    try
-//      Json.LoadFromFile('conf.json');
-//      // change value
-//      Json['window']['width'].AsInteger := 800;
-//      // loop with array
-//      for i := 0 to Json['fonts'].Count - 1 do
-//        Json['fonts'].Values[i].AsString;
-//      // test change  
-//      Result := (Json['window']['width'].AsInteger = 800);
-//
-//      // assigning values
-//
-//    except
-//      Result := False;
-//    end;
-//  finally
-//    Json.Free;
-//  end;
-//end;

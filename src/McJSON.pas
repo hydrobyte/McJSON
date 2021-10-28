@@ -813,7 +813,7 @@ begin
   // looking for an element
   for i := 0 to (fChild.Count - 1) do
   begin
-    if LowerCase( TMcJsonItem(fChild.Items[i]).fKey ) = aKey then
+    if (TMcJsonItem(fChild.Items[i]).fKey = aKey) then
     begin
       idx := i;
       Break;
