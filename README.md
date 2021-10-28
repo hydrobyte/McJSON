@@ -130,8 +130,8 @@ A test comparation have been done with the original `myJSON`, `LkJson` and `Json
 
 The next table summarizes the results[^1]:
 
-Library    | Generate | Save | Parse  | Load   | Access |
------------|----------|------|--------|--------|--------|
+Library    | Generate | Save | Parse  | Load  :| Access |
+:----------|---------:|-----:|-------:|-------:|-------:|
 myJSON     |   50.00s | .07s | 5.1min | 7.7min |  1.60s |
 LkJson     |     .30s | .13s |   .47s |   .36s |   .00s |
 JsonTools  |   48.00s | .70s | 39.00s | 40.00s |   .48s |
