@@ -44,7 +44,7 @@ begin
               and (N['key'].AsString        = 'value'  )
               and (N.Keys[0]                = 'key'    )
               and (N.Values[0].AsString     = 'value'  )
-              and (N.Childs['key'].AsString = 'value'  );
+              and (N.Items['key'].AsString  = 'value'  );
   except
     Result := False;
   end;
@@ -150,15 +150,15 @@ begin
     Result := Result and (P.AsJSON = '{"a": [{"k1": 1},{"k1": 1}]}')
                      and (P['a'].Count = 2);
     // remove item by index
-    P['a'].Remove(1);
+    P['a'].Delete(1);
     Result := Result and (P.AsJSON = '{"a": [{"k1": 1}]}')
                      and (P['a'].Count = 1);
     // remove item by key
-    P.Remove('a');
+    P.Delete('a');
     Result := Result and (P.AsJSON = '{}')
                      and (P.Count  = 0   );
     // remove empty item
-    P.Remove(0);
+    P.Delete(0);
     Result := Result and (P.AsJSON = '{}')
                      and (P.Count  = 0   );
   except
@@ -178,7 +178,7 @@ begin
   try
     N.AsJSON := '{ "array": [1, "2", 3] }';
     N['array'].Values[3].AsInteger := 4;
-    //N['array'].Childs[0].SetInt(4);        // will not compile in Delphi
+    //N['array'].Items[0].SetInt(4);        // will not compile in Delphi
     Result := False;
   except
     Result := True;
@@ -266,6 +266,10 @@ begin
     IsValid := IsValid or N.Check( '{ "k": "value }' );
     IsValid := IsValid or N.Check( '{ "k": 12345a }' );
     IsValid := IsValid or N.Check( '{ "k": 12"45a }' );
+    // values not recognized
+    IsValid := IsValid or N.Check( '{ "k": truee }' );
+    IsValid := IsValid or N.Check( '{ "k": falsi }' );
+    IsValid := IsValid or N.Check( '{ "k": nil   }' );
     // key bad formats
     IsValid := IsValid or N.Check( '{ "k: "value" }' );
     IsValid := IsValid or N.Check( '{ k": "value" }' );
@@ -379,7 +383,7 @@ begin
     M.Copy(N);
     M.Add('k').AsString := 'v';
     P := M.Clone;
-    P.Remove(0);
+    P.Delete(0);
     Q := P.Clone;
     Result := Result and (N.AsJSON = '{"i": 123}'         )
                      and (M.AsJSON = '{"i": 123,"k": "v"}')
@@ -416,7 +420,7 @@ begin
       Json.SaveToFile('example.json');
       Json.LoadFromFile('example.json');
       // remove an item
-      Json.Remove('array');
+      Json.Delete('array');
       // test final result
       Result := (Json.AsJSON = '{"key1": 1,"key2": true,"key3": 1.234,"key4": "value 1"}');
     except

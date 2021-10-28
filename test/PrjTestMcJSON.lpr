@@ -50,7 +50,7 @@ begin
               and (N['key'].AsString        = 'value'  )
               and (N.Keys[0]                = 'key'    )
               and (N.Values[0].AsString     = 'value'  )
-              and (N.Items['key'].AsString = 'value'  );
+              and (N.Items['key'].AsString  = 'value'  );
   except
     Result := False;
   end;
