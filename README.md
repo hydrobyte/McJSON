@@ -44,20 +44,23 @@ begin
       Json.Add('array').ItemType := jitArray;
       for i := 1 to 3 do
         Json['array'].Add.AsInteger := i;
-      // save and load
-      Json.SaveToFile('example.json');
-      Json.LoadFromFile('example.json');
+      // save a backup to file
+      if (Json['array'].Count = 3) then
+        Json.SaveToFile('example.json');
       // remove an item
       Json.Delete('array');
+      // oops, load the backup
+      if (Json.Count = 4) then
+        Json.LoadFromFile('example.json');
       // test final result
-      Result := (Json.AsJSON = '{"key1": 1,"key2": true,"key3": 1.234,"key4": "value 1"}');
+      Result := (Json.AsJSON = '{"key1":1,"key2":true,"key3":1.234,"key4":"value 1","array":[1,2,3]}');
     except
       Result := False;
     end;
   finally
     Json.Free;
   end;
-end; 
+end;
 ```
 Will produce `\test\example.json`:
 ```json
@@ -86,7 +89,8 @@ bool Test99(AnsiString& Msg)
   Msg = "Test: Github readme.md content";
   Json = new TMcJsonItem();
   try
-  { try
+  {
+    try
     { // add some pairs.
       Json->Add("key1")->AsInteger = 1;
       Json->Add("key2")->AsBoolean = true;
@@ -96,14 +100,19 @@ bool Test99(AnsiString& Msg)
       Json->Add("array")->ItemType = jitArray;
       for (int i = 1; i <= 3 ; i++)
         Json->Items["array"]->Add()->AsInteger = i;
-      // save and load
-      Json->SaveToFile("example.json");
-      Json->LoadFromFile("example.json");
+      // save a backup to file
+      if (Json->Items["array"]->Count == 3)
+        Json->SaveToFile("example.json");
       // remove an item
       Json->Delete("array");
+      // oops, load the backup
+      if (Json->Count == 4)
+        Json->LoadFromFile("example.json");
       // test final result
       Result = (Json->AsJSON ==
-                "{\"key1\": 1,\"key2\": true,\"key3\": 1.234,\"key4\": \"value 1\"}");
+                "{\"key1\":1,\"key2\":true,\"key3\":1.234,\"key4\":\"value 1\",\"array\":[1,2,3]}");
+      if (Result) ShowMessage("Test99 OK");
+      else        ShowMessage("Test99 NOT OK");
     }
     catch(...)
     {
