@@ -110,9 +110,7 @@ bool Test99(AnsiString& Msg)
         Json->LoadFromFile("example.json");
       // test final result
       Result = (Json->AsJSON ==
-                "{\"key1\":1,\"key2\":true,\"key3\":1.234,\"key4\":\"value 1\",\"array\":[1,2,3]}");
-      if (Result) ShowMessage("Test99 OK");
-      else        ShowMessage("Test99 NOT OK");
+                "{\"key1\":1,\"key2\":true,\"key3\":1.234,\"key4\":\"value 1\",\"array\":[1,2,3]}");      
     }
     catch(...)
     {
