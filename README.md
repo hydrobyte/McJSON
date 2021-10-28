@@ -137,7 +137,7 @@ LkJson     |     .30s | .13s |   .47s |   .36s |   .00s |
 JsonTools  |   48.00s | .70s | 39.00s | 40.00s |   .48s |
 **McJSON** |     .08s | .09s |   .11s |   .16s |   .70s |
 
-[^1]Metric: average time in seconds (s) for 5 consecutive executions. Some results converted to minutes (min).
+[^1]: Metric: average time in seconds (s) for 5 consecutive executions. Some results converted to minutes (min).
 
 ### Notes about `myJSON`
 * Performance deteriored due the recurrent use of wsTrim().
