@@ -4,7 +4,7 @@ A **Delphi / Lazarus / C++Builder** simple and small class for fast JSON parsing
 ## Motivation
 Some points of interest:
  * Simple Object-Pascal native code using TList as internal data structure.
- * String single-pass parser. 
+ * Single-pass string parser. 
  * Compatible (aimed):
    * Delphi 7 up to now.
    * Lazarus.
@@ -13,7 +13,7 @@ Some points of interest:
    * BDS 2006 (Delphi and BCP)
    * Lazarus 2.3.0 (FPC 3.2.2)
    * C++Builder 10.2.
- * Just one unit, just one class.
+ * Just one unit (`McJSON`), just one class(`TMcJsonItem`).
  * Inspired by [badunius/myJSON](https://github.com/badunius/myJSON).
  * Performance [tests](#performance-tests) using C++Builder and comparing:
    *  [myJSON](https://github.com/badunius/myJSON) 
