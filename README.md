@@ -148,7 +148,7 @@ Library    | Generate | Save | Parse  | Load   | Access |
 `McJSON`   |     .08s | .09s |   .11s |   .16s |   .54s |
 
 [^1]: Metric: average time in seconds (s) for 5 consecutive executions. Some results converted to minutes (min).
-[^2]: For `uJSON` 50k items was too much. After wayting for 1 hour, I've decided to downgrade and test 25k items.
+[^2]: For `uJSON` 50k items were too much. After waiting for 1 hour, I've decided to downgrade and test 25k items.
 
 ### Notes about `myJSON`
 * Performance deteriored due the recurrent use of wsTrim().
@@ -173,7 +173,7 @@ Library    | Generate | Save | Parse  | Load   | Access |
 * Uses TStringList as a "Hash Map" [string] -> [object address]. The comas here is because I think the string entry is not a true hash within TStringList.
 * In some aspectes, the methods interface might became puzzling.
 * It needs a performance review.
-* This unit is used in other projects, e.g. [Diffbot API Delphi Client Library](https://github.com/diffbot/diffbot-delphi-client)
+* This unit is used in other projects, e.g. [Diffbot API Delphi Client Library](https://github.com/diffbot/diffbot-delphi-client) (same author).
 * Generate using: `Json->put("key", "value")`.
 * Parse using: `JsonP = new TJSONObject(Json->toString())`.
 * `SaveToFile` doesn't exist, so it has used `TStringList->SaveToFile()` after filling `Text` with `Json->toString()`.
