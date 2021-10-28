@@ -10,7 +10,7 @@ type
   TTest = function(out Msg: string): Boolean;
 
 var
-  s: string;  
+  s: string;
 
 procedure Check(Test: TTest; var Passed, Failed: Integer);
 var
@@ -28,7 +28,7 @@ begin
   end;
 end;
 
-function Test1(out Msg: string): Boolean;
+function Test01(out Msg: string): Boolean;
 var
   N: TMcJsonItem;
 begin
@@ -51,7 +51,7 @@ begin
   N.Free;
 end;
 
-function Test2(out Msg: string): Boolean;
+function Test02(out Msg: string): Boolean;
 var
   N: TMcJsonItem;
 begin
@@ -73,7 +73,7 @@ begin
   N.Free;
 end;
 
-function Test3(out Msg: string): Boolean;
+function Test03(out Msg: string): Boolean;
 var
   N: TMcJsonItem;
 begin
@@ -94,7 +94,7 @@ begin
   N.Free;
 end;
 
-function Test4(out Msg: string): Boolean;
+function Test04(out Msg: string): Boolean;
 var
   N: TMcJsonItem;
 begin
@@ -110,7 +110,7 @@ begin
   N.Free;
 end;
 
-function Test5(out Msg: string): Boolean;
+function Test05(out Msg: string): Boolean;
 var
   N, M, P, Q: TMcJsonItem;
 begin
@@ -134,24 +134,24 @@ begin
     // add nested object
     N.Clear;
     N.Add('k1').Add('k2').Add('k3').AsString := 'v3';
-    Result := Result and (N.AsJSON = '{"k1": {"k2": {"k3": "v3"}}}');
+    Result := Result and (N.AsJSON = '{"k1":{"k2":{"k3":"v3"}}}');
     // add int values into array
     P.Add('a').ItemType := jitArray;
     P['a'].Add.AsInteger := 1;
     P['a'].Add.AsInteger := 2;
     P['a'].Add.AsInteger := 3;
-    Result := Result and (P.AsJSON = '{"a": [1,2,3]}');
+    Result := Result and (P.AsJSON = '{"a":[1,2,3]}');
     // add obj values into array
     P.Clear;
     P.Add('a' ).ItemType  := jitArray;
     Q.Add('k1').AsInteger := 1;
     P['a'].Add.AsObject := Q;
     P['a'].Add.AsObject := Q;
-    Result := Result and (P.AsJSON = '{"a": [{"k1": 1},{"k1": 1}]}')
+    Result := Result and (P.AsJSON = '{"a":[{"k1":1},{"k1":1}]}')
                      and (P['a'].Count = 2);
     // remove item by index
     P['a'].Delete(1);
-    Result := Result and (P.AsJSON = '{"a": [{"k1": 1}]}')
+    Result := Result and (P.AsJSON = '{"a":[{"k1":1}]}')
                      and (P['a'].Count = 1);
     // remove item by key
     P.Delete('a');
@@ -169,7 +169,7 @@ begin
   P.Free;
 end;
 
-function Test6(out Msg: string): Boolean;
+function Test06(out Msg: string): Boolean;
 var
   N: TMcJsonItem;
 begin
@@ -186,7 +186,7 @@ begin
   N.Free;
 end;
 
-function Test7(out Msg: string): Boolean;
+function Test07(out Msg: string): Boolean;
 var
   N, M: TMcJsonItem;
   Aux: Boolean;
@@ -221,7 +221,7 @@ begin
   N.Free;
 end;
 
-function Test8(out Msg: string): Boolean;
+function Test08(out Msg: string): Boolean;
 var
   N: TMcJsonItem;
 begin
@@ -237,7 +237,7 @@ begin
   N.Free;
 end;
 
-function Test9(out Msg: string): Boolean;
+function Test09(out Msg: string): Boolean;
 var
   N: TMcJsonItem;
 begin
@@ -318,25 +318,36 @@ end;
 
 function Test12(out Msg: string): Boolean;
 var
-  N: TMcJsonItem;
+  N, M: TMcJsonItem;
+  i, idx: Integer;
 begin
-  Msg := 'Test: load and save file';
-  N := TMcJsonItem.Create;
+  Msg := 'Test: Save and Load using files';
+  N := TMcJsonItem.Create();
+  M := TMcJsonItem.Create();
   try
-    N.AsJSON := '{ "i": 123, "f": 123.456, "s": "abc", "b": True, "n": Null, "a": [1,2], "o": {"k": "v"} }';
-    N.SaveToFile('.\test.json', True);
-    N.LoadFromFile('.\test.json');
-    // check result
-    Result :=     (N['i'].AsInteger           = 123  )
-              and (N['s'].AsString            = 'abc')
-              and (N['b'].AsBoolean           = True )
-              and (N['n'].IsNull                     )
-              and (N['a'].Values[0].AsInteger = 1    )
-              and (N['o']['k'].AsString       = 'v'  );
+    Result := True;
+    // create a simple object.
+    N.AsJSON := '{"i": 123}';
+    // now add a array of objects
+    N.Add('array').ItemType := jitArray;
+    for i := 1 to 2 do
+      N['array'].Add.AsJSON := '{"k'+IntToStr(i)+'": "v'+IntToStr(i)+'"}';
+    // save to file (not Human readable)
+    N.SaveToFile('test12.json', false);
+    // change N using IndexOf
+    idx := N.IndexOf('array');
+    if (idx >= 0) then
+      N.Delete(idx);
+    // load from file
+    M.LoadFromFile('test12.json');
+    // check before and after delete
+    Result := Result and (N.AsJSON = '{"i":123}'                                  )
+                     and (M.AsJSON = '{"i":123,"array":[{"k1":"v1"},{"k2":"v2"}]}');
   except
     Result := False;
   end;
   N.Free;
+  M.Free;
 end;
 
 function Test13(out Msg: string): Boolean;
@@ -354,11 +365,11 @@ begin
     Result := Result and (N.AsJSON = '');
     // constructor by code
     M := TMcJsonItem.Create('{"i": 123}');
-    Result := Result and (M.AsJSON = '{"i": 123}');
+    Result := Result and (M.AsJSON = '{"i":123}');
     // constructor copy
     P := TMcJsonItem.Create(M);
-    Result := Result and (M.AsJSON = '{"i": 123}')
-                     and (P.AsJSON = '{"i": 123}');
+    Result := Result and (M.AsJSON = '{"i":123}')
+                     and (P.AsJSON = '{"i":123}');
   except
     Result := False;
   end;
@@ -385,10 +396,10 @@ begin
     P := M.Clone;
     P.Delete(0);
     Q := P.Clone;
-    Result := Result and (N.AsJSON = '{"i": 123}'         )
-                     and (M.AsJSON = '{"i": 123,"k": "v"}')
-                     and (P.AsJSON = '{"k": "v"}'         )
-                     and (Q.IsEqual(P)                    );
+    Result := Result and (N.AsJSON = '{"i":123}'        )
+                     and (M.AsJSON = '{"i":123,"k":"v"}')
+                     and (P.AsJSON = '{"k":"v"}'        )
+                     and (Q.IsEqual(P)                  );
   except
     Result := False;
   end;
@@ -416,13 +427,16 @@ begin
       Json.Add('array').ItemType := jitArray;
       for i := 1 to 3 do
         Json['array'].Add.AsInteger := i;
-      // save and load
-      Json.SaveToFile('example.json');
-      Json.LoadFromFile('example.json');
+      // save a backup to file
+      if (Json['array'].Count = 3) then
+        Json.SaveToFile('example.json');
       // remove an item
       Json.Delete('array');
+      // oops, load the backup
+      if (Json.Count = 4) then
+        Json.LoadFromFile('example.json');
       // test final result
-      Result := (Json.AsJSON = '{"key1": 1,"key2": true,"key3": 1.234,"key4": "value 1"}');
+      Result := (Json.AsJSON = '{"key1":1,"key2":true,"key3":1.234,"key4":"value 1","array":[1,2,3]}');
     except
       Result := False;
     end;
@@ -438,15 +452,15 @@ begin
   TotalPassed := 0;
   TotalFailed := 0;
 
-  Check(Test1 , TotalPassed, TotalFailed);
-  Check(Test2 , TotalPassed, TotalFailed);
-  Check(Test3 , TotalPassed, TotalFailed);
-  Check(Test4 , TotalPassed, TotalFailed);
-  Check(Test5 , TotalPassed, TotalFailed);
-  Check(Test6 , TotalPassed, TotalFailed);
-  Check(Test7 , TotalPassed, TotalFailed);
-  Check(Test8 , TotalPassed, TotalFailed);
-  Check(Test9 , TotalPassed, TotalFailed);
+  Check(Test01, TotalPassed, TotalFailed);
+  Check(Test02, TotalPassed, TotalFailed);
+  Check(Test03, TotalPassed, TotalFailed);
+  Check(Test04, TotalPassed, TotalFailed);
+  Check(Test05, TotalPassed, TotalFailed);
+  Check(Test06, TotalPassed, TotalFailed);
+  Check(Test07, TotalPassed, TotalFailed);
+  Check(Test08, TotalPassed, TotalFailed);
+  Check(Test09, TotalPassed, TotalFailed);
   Check(Test10, TotalPassed, TotalFailed);
   Check(Test11, TotalPassed, TotalFailed);
   Check(Test12, TotalPassed, TotalFailed);

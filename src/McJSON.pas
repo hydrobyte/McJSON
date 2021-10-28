@@ -230,7 +230,6 @@ end;
 
 function TMcJsonItem.fGetType(): TJItemType;
 begin
-  Result := jitUnset;
   if (Self = nil) then Error(SItemNil);
   Result := fType;
 end;
@@ -426,7 +425,7 @@ begin
   if (Self  = nil) then Error(SItemNil);
   // if unset, set as value
   if (fType <> jitObject) then fSetType(jitObject);
-  // return
+  // make a copy (parsing)
   Self.AsJSON := aValue.AsJSON;
 end;
 
@@ -435,7 +434,7 @@ begin
   if (Self  = nil) then Error(SItemNil);
   // if unset, set as value
   if (fType <> jitArray) then fSetType(jitArray);
-  // return
+  // make a copy (parsing)
   Self.AsJSON := aValue.AsJSON;
 end;
 
@@ -948,12 +947,12 @@ function TMcJsonItem.ToString(aHuman: Boolean; const aIndent: string): string;
       Exit;
     end;
 
+    Result := sNL;
+    len    := Self.Count - 1;
+
     if aHuman
       then sNL := #13#10
       else sNL := '';
-
-    Result := sNL;
-    len    := Self.Count - 1;
 
     if aHuman
       then aNewInd := aIndent + '  '
@@ -977,11 +976,17 @@ function TMcJsonItem.ToString(aHuman: Boolean; const aIndent: string): string;
 
 var
   sPrefix: string;
+  sCo: string;
 begin
   Result := '';
   if (Self =  nil) then Error(SItemNil);
+
+  if (aHuman)
+    then sCo := ': '
+    else sCo     := ':';
+
   if (Self <> nil) and (fKey <> '')
-    then sPrefix := '"' + fKey + '"' + ': '
+    then sPrefix := '"' + fKey + '"' + SCo
     else sPrefix := '';
   case fType of
     jitObject: Result := aIndent + sPrefix + '{' + EnumItems + '}';
