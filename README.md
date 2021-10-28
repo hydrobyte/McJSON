@@ -127,7 +127,7 @@ bool Test99(AnsiString& Msg)
 ```
 
 ## Performance Tests
-A performance test have been done with the original `myJSON`, `LkJson` and `JsonTools` units.
+A performance test have been done with the original `myJSON`, `LkJson`, `JsonTools` and `uJSON` units.
 Here is a summary of the tests.
 * C++Builder VCL examples built with BDS 2006 (the older version I have).
 * Generate a JSON with 50k items like: `{... {"keyi":"valuei"}... }`
