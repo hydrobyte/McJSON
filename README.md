@@ -250,7 +250,7 @@ And using a example like `testInspect.json`:
 ```
 
 Calling `Inspect()` with a Json object loaded with `testInspect.json`:
-```c++
+```
 TMcJsonItem* Json = new TMcJsonItem();
 if (Json)
 {
