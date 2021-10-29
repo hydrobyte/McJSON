@@ -7,7 +7,7 @@ A **Delphi / Lazarus / C++Builder** simple and small class for fast JSON parsing
 * [Performance Tests](#performance-tests)
 
 ## Motivation
-Some points of interest:
+Some points of interest test:
  * Simple Object-Pascal native code using TList as internal data structure.
  * Single-pass string parser. 
  * Compatible (aimed):
@@ -139,8 +139,9 @@ Please considere read Unit Tests in `test` folder for a complete list of `McJSON
 Here is how to access all items (children) of a JSON object and change their value type and content.
 ```pascal
 N.AsJSON := '{"o": {"k1":"v1", "k2":"v2"}}';
+// type and value: from string to integer
 for i := 1 to N['o'].Count do  
-  N['o'].AsInteger := i;
+  N['o'].AsInteger := i;   
 ```
 Results in:
 ```json
@@ -192,7 +193,7 @@ Results in:
 ```
 
 ### Inspect the content of an object
-Let's see how to see and ispect all the inner data structure, types and values of a `TMcJsonItem` object.
+Let's see how to isnpect all the inner data structure, types and values of a `TMcJsonItem` object.
 ```c++
 //---------------------------------------------------------------------------
 void
@@ -249,8 +250,8 @@ And using a example like `testInspect.json`:
 }
 ```
 
-Calling `Inspect()` with a Json object loaded with `testInspect.json`:
-```
+Calling `Inspect()` with a `Json` object loaded with `testInspect.json`:
+```c++
 TMcJsonItem* Json = new TMcJsonItem();
 if (Json)
 {
@@ -258,11 +259,10 @@ if (Json)
   Inspect(Json);
   delete (Json);
 }
-
 ```
 
 Results in:
-```c++
+```
 object; string; Key=; Value=; JSON={"foo":"bar","array":[100,20],"arrayObj":[{"key1":1.0},{"key2":2.0}],"Msg":["#1 UTF8 example: motivação","#2 Scapes: \b\t\n\f\r\u\"\\"]}
    value; string; Key=foo; Value=bar; JSON="foo":"bar"
    array; string; Key=array; Value=; JSON="array":[100,20]
@@ -338,5 +338,4 @@ Library    | Generate  | Save     | Parse    | Load     | Access  | Total      |
 * Generate using: `Json->put("key", "value")`.
 * Parse using: `JsonP = new TJSONObject(Json->toString())`.
 * `SaveToFile` doesn't exist, so it has used `TStringList->SaveToFile()` after filling `Text` with `Json->toString()`.
-
 
