@@ -126,6 +126,25 @@ bool Test99(AnsiString& Msg)
 }
 ```
 
+## Use Cases
+Please considere read Unit Tests in `test` folder for a complete list of `McJSON` use cases.
+
+### Object and Array Setters
+not so common out there.
+```pascal
+N.AsJSON := '{"o": {"k1":"v1", "k2":"v2"}}';
+N['o'].AsString := 'str';
+```
+Results in:
+```json
+{
+   "o":{
+      "k1":"str",
+      "k2":"str"
+   }
+}
+```
+
 ## Performance Tests
 A performance test have been done with the original `myJSON`, `LkJson`, `JsonTools` and `uJSON` units.
 Here is a summary of the tests.
