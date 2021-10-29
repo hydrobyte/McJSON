@@ -191,6 +191,93 @@ Results in:
 }
 ```
 
+### Inspect the content of an object
+Let's see how to see and ispect all the inner data structure, types and values of a `TMcJsonItem object.
+```c++
+//---------------------------------------------------------------------------
+void
+TFormMain::Inspect(TMcJsonItem* AMcJItem, AnsiString Ident)
+{
+  if (!AMcJItem) return;
+  // log current
+  MyLog( Ident + ItemToStr(AMcJItem) );
+  // log child
+  if ( AMcJItem->HasChild )
+  {
+    Ident = "  " + Ident;
+    for (int i=0; i < AMcJItem->Count; i++)
+    { // use Value not Child because are note using Key[].
+      Inspect( AMcJItem->Values[i], Ident );
+    }
+  }
+}
+//---------------------------------------------------------------------------
+String
+TFormMain::ItemToStr(TMcJsonItem* AMcJItem) const
+{
+  String Ans = "";
+  if (AMcJItem)
+    Ans =             AMcJItem->GetTypeStr() +
+          "; "      + AMcJItem->GetValueStr() +
+          "; Key="  + AMcJItem->Key +
+          "; Value="+ AMcJItem->Value +
+          "; JSON=" + AMcJItem->AsJSON;
+  return (Ans);
+}
+//---------------------------------------------------------------------------
+```
+And using a example like `testInspect.json`:
+```json
+{
+   "foo": "bar",
+   "array": [
+      100,
+      20
+   ],
+   "arrayObj": [
+      {
+         "key1": 1.0
+      },
+      {
+         "key2": 2.0
+      }
+   ],
+   "Msg": [
+      "#1 UTF8 example: motivação",
+      "#2 Scapes: \b\t\n\f\r\\u\"\\"
+   ]
+}
+```
+
+Calling Inspect with a Json object load with testInspect:
+```c++
+TMcJsonItem* Json = new TMcJsonItem();
+if (Json)
+{
+  Json->LoadFromFile("testInspect.json");
+  Inspect(Json);
+  delete (Json);
+}
+
+```
+
+Results in:
+```
+object; string; Key=; Value=; JSON={"foo":"bar","array":[100,20],"arrayObj":[{"key1":1.0},{"key2":2.0}],"Msg":["#1 UTF8 example: motivação","#2 Scapes: \b\t\n\f\r\u\"\\"]}
+   value; string; Key=foo; Value=bar; JSON="foo":"bar"
+   array; string; Key=array; Value=; JSON="array":[100,20]
+     value; number; Key=; Value=100; JSON=100
+     value; number; Key=; Value=20; JSON=20
+   array; string; Key=arrayObj; Value=; JSON="arrayObj":[{"key1":1.0},{"key2":2.0}]
+     object; string; Key=; Value=; JSON={"key1":1.0}
+       value; number; Key=key1; Value=1.0; JSON="key1":1.0
+     object; string; Key=; Value=; JSON={"key2":2.0}
+       value; number; Key=key2; Value=2.0; JSON="key2":2.0
+   array; string; Key=Msg; Value=; JSON="Msg":["#1 UTF8 example: motivação","#2 Scapes: \b\t\n\f\r\u\"\\"]
+     value; string; Key=; Value=#1 UTF8 example: motivação; JSON="#1 UTF8 example: motivação"
+     value; string; Key=; Value=#2 Scapes: \b\t\n\f\r\u\"\\; JSON="#2 Scapes: \b\t\n\f\r\u\"\\"
+```
+
 ## Performance Tests
 A performance test have been done with the original `myJSON`, `LkJson`, `JsonTools` and `uJSON` units.
 Here is a summary of the tests.
