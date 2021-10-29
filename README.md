@@ -152,7 +152,7 @@ Results in:
 }
 ```
 
-### Object and array setters
+### Object and array value setters
 Change all values of an object with multiple items.
 Not so common out there.
 ```pascal
@@ -169,13 +169,13 @@ Results in:
 }
 ```
 
-### Object and array convertions
-Convert from array to object and vice-versa.
+### Object and array type convertions
+Convert from array to object type and vice-versa.
 Also, not so common out there.
 ```pascal
 N.AsJSON := '{ "k1": ["1", "2"], "k2": {"1": "a", "2": "b"} }';
 N['k1'].ItemType := jitObject; // convert array to object with items
-N['k2'].ItemType := jitArray ; // converte object with items to array 
+N['k2'].ItemType := jitArray ; // convert object with items to array 
 ```
 Results in:
 ```json
