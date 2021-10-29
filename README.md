@@ -262,7 +262,7 @@ if (Json)
 ```
 
 Results in:
-```
+```c++
 object; string; Key=; Value=; JSON={"foo":"bar","array":[100,20],"arrayObj":[{"key1":1.0},{"key2":2.0}],"Msg":["#1 UTF8 example: motivação","#2 Scapes: \b\t\n\f\r\u\"\\"]}
    value; string; Key=foo; Value=bar; JSON="foo":"bar"
    array; string; Key=array; Value=; JSON="array":[100,20]
