@@ -307,11 +307,13 @@ begin
   if      (Self = nil       ) then Error(SItemNil)
   else if (fType <> jitValue) then Error(SItemTypeInvalid);
   // return a compatible value type
+  // try to convert
   try
     case fValType of
       jvtNumber : Ans := StrToInt(fValue);         // expected
       jvtString : Ans := StrToInt(fValue);         // convertion
       jvtBoolean: Ans := Integer(fValue = 'true'); // convertion
+      else Error(SItemTypeIncompatible);
     end;
   except
     Error(SItemTypeIncompatible);
@@ -333,6 +335,7 @@ begin
       jvtNumber : Ans := StrToFloat(fValue);       // expected
       jvtString : Ans := StrToFloat(fValue);       // convertion
       jvtBoolean: Ans := Integer(fValue = 'true'); // convertion
+      else Error(SItemTypeIncompatible);
     end;
   except
     Error(SItemTypeIncompatible);
@@ -363,6 +366,7 @@ begin
       jvtBoolean: Ans := Boolean(fValue = 'true') ; // expected
       jvtString : Ans := Boolean(StrToInt(fValue)); // convertion
       jvtNumber : Ans := Boolean(StrToInt(fValue)); // convertion
+      else Error(SItemTypeIncompatible);
     end;
   except
     Error(SItemTypeIncompatible);
@@ -946,18 +950,18 @@ function TMcJsonItem.ToString(aHuman: Boolean; const aIndent: string): string;
       Result := '';
       Exit;
     end;
-
-    Result := sNL;
-    len    := Self.Count - 1;
-
+    // new line
     if aHuman
       then sNL := #13#10
       else sNL := '';
-
+    // indentation (used in recursive loop)
     if aHuman
       then aNewInd := aIndent + '  '
       else aNewInd := '';
-
+    // init
+    Result := sNL;
+    len    := Self.Count - 1;
+    // mount recursively
     for i := 0 to len do
     begin
       Result := Result + TMcJsonItem(fChild.Items[i]).ToString(aHuman, aNewInd);
@@ -976,23 +980,23 @@ function TMcJsonItem.ToString(aHuman: Boolean; const aIndent: string): string;
 
 var
   sPrefix: string;
-  sCo: string;
+  sSp: string;
 begin
   Result := '';
   if (Self =  nil) then Error(SItemNil);
-
+  // key value separator
   if (aHuman)
-    then sCo := ': '
-    else sCo     := ':';
-
+    then sSp := ': '
+    else sSp := ':';
+  // key as a prefix 
   if (Self <> nil) and (fKey <> '')
-    then sPrefix := '"' + fKey + '"' + SCo
+    then sPrefix := '"' + fKey + '"' + sSp
     else sPrefix := '';
+  // mount
   case fType of
     jitObject: Result := aIndent + sPrefix + '{' + EnumItems + '}';
     jitArray : Result := aIndent + sPrefix + '[' + EnumItems + ']';
-  else
-    if (fValue <> '') then
+    else if (fValue <> '') then
       Result := aIndent + sPrefix + QuoteValue(fValue);
   end;
 end;
