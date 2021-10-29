@@ -1,5 +1,10 @@
 # McJSON
 A **Delphi / Lazarus / C++Builder** simple and small class for fast JSON parsing.
+At a glance:
+* [Motivation](#motivation).
+* [Examples](#examples).
+* [Use cases](#use-cases).
+* [Performance Tests](#performance-tests)
 
 ## Motivation
 Some points of interest:
@@ -21,6 +26,7 @@ Some points of interest:
    *  [JsonTools](https://github.com/sysrpl/JsonTools)
    *  [uJSON](https://sourceforge.net/projects/is-webstart/) (Delphi Web Utils)
 
+## Examples
 ### Object-Pascal Example
 
 ```pascal
@@ -129,8 +135,8 @@ bool Test99(AnsiString& Msg)
 ## Use Cases
 Please considere read Unit Tests in `test` folder for a complete list of `McJSON` use cases.
 
-### Array and object child
-Here is how to access all children of an JSON object
+### Array or object items
+Here is how to access all items (children) of a JSON object and change their value type and content.
 ```pascal
 N.AsJSON := '{"o": {"k1":"v1", "k2":"v2"}}';
 for i := 1 to N['o'].Count do  
@@ -139,7 +145,7 @@ for i := 1 to N['o'].Count do
 Results in:
 ```json
 {
-   "o":{
+   "o": {
       "k1":1,
       "k2":2
    }
@@ -147,6 +153,7 @@ Results in:
 ```
 
 ### Object and array setters
+Change all values of an object with multiple items.
 Not so common out there.
 ```pascal
 N.AsJSON := '{"o": {"k1":"v1", "k2":"v2"}}';
@@ -155,28 +162,29 @@ N['o'].AsString := 'str';
 Results in:
 ```json
 {
-   "o":{
-      "k1":"str",
-      "k2":"str"
+   "o": {
+      "k1": "str",
+      "k2": "str"
    }
 }
 ```
 
-### Object and array setters
+### Object and array convertions
+Convert from array to object and vice-versa.
 Also, not so common out there.
 ```pascal
 N.AsJSON := '{ "k1": ["1", "2"], "k2": {"1": "a", "2": "b"} }';
-N['k1'].ItemType := jitObject; // convert array to object with children
-N['k2'].ItemType := jitArray ; // converte object with children to array 
+N['k1'].ItemType := jitObject; // convert array to object with items
+N['k2'].ItemType := jitArray ; // converte object with items to array 
 ```
 Results in:
 ```json
 {
-   "k1":{
-      "0":"1",
-      "1":"2"
+   "k1": {
+      "0": "1",
+      "1": "2"
    },
-   "k2":[
+   "k2": [
       "a",
       "b"
    ]
@@ -204,16 +212,16 @@ Library    | Generate  | Save     | Parse    | Load     | Access  | Total      |
 `LkJson`   |     .30 s |    .13 s |    .47 s |    .36 s |   .00 s |     1.22 s |
 `JsonTools`|   48.00 s |    .70 s |  39.00 s |  40.00 s |   .48 s |    1.2 min |
 `myJSON`   |   50.00 s |    .07 s |  5.1 min |  7.7 min |  1.60 s |   13.1 min |
-`uJSON`[^2]|  18.6 min | 20.1 min | 17.5 min |   4.31 s | 53.02 s |   57.6 min |
+`uJSON`    |  18.6 min | 20.1 min | 17.5 min |   4.31 s | 53.02 s |   57.6 min |
 
 
 [^1]: Metric: average time in seconds (s) for 5 consecutive executions. Total is the average of partial tests. Some results converted to minutes (min).
-[^2]: With `uJSON`, there seems to be a performance problem related to `toString()`.
 
-### Notes about `myJSON`
-* Performance deteriored due the recurrent use of wsTrim().
-* Generate using: `Json->Item["key"]->setStr("value")`.
-* Parse using: `JsonP->Code = Json->getJSON()`.
+### Notes about `McJSON`
+* Good performance, but not the better about random access due to the use of TList.
+* Simple and smart interface using "AsXXX" getters and setters (not invented here).
+* Generate using: `Json->Add("key")->AsString = "value"`.
+* Parse using: `JsonP->AsJSON = Json->AsJSON`.
 
 ### Notes about `LkJson`
 * Good performance generating and parsing and even better with random access due to "Balanced Search Tree" `TlkBalTree`.
@@ -228,18 +236,20 @@ Library    | Generate  | Save     | Parse    | Load     | Access  | Total      |
 * Generate using: `Json->Add("key", "value")`.
 * Parse using: `JsonP->Value = Json->AsJson`.
 
+### Notes about `myJSON`
+* Performance deteriored due the recurrent use of wsTrim().
+* Generate using: `Json->Item["key"]->setStr("value")`.
+* Parse using: `JsonP->Code = Json->getJSON()`.
+
 ### Notes about `uJSON`
 * Less verbosy in C++ than `LkJson`, but the colection of classes also will force casting with `dynamic_cast`.
 * Uses TStringList as a "Hash Map" [string] -> [object address]. The comas here is because I think the string entry is not a true hash within TStringList.
 * In some aspectes, the methods interface might became puzzling.
 * It needs a performance review.
+* With `uJSON`, there seems to be a performance problem related to `toString()`.
 * This unit is used in other projects, e.g. [Diffbot API Delphi Client Library](https://github.com/diffbot/diffbot-delphi-client) (same author).
 * Generate using: `Json->put("key", "value")`.
 * Parse using: `JsonP = new TJSONObject(Json->toString())`.
 * `SaveToFile` doesn't exist, so it has used `TStringList->SaveToFile()` after filling `Text` with `Json->toString()`.
 
-### Notes about `McJSON`
-* Good performance, but not the better about random access due to the use of TList.
-* Simple and smart interface using "AsXXX" getters and setters (not invented here).
-* Generate using: `Json->Add("key")->AsString = "value"`.
-* Parse using: `JsonP->AsJSON = Json->AsJSON`.
+
