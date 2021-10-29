@@ -129,8 +129,25 @@ bool Test99(AnsiString& Msg)
 ## Use Cases
 Please considere read Unit Tests in `test` folder for a complete list of `McJSON` use cases.
 
-### Object and Array Setters
-not so common out there.
+### Array and object child
+Here is how to access all children of an JSON object
+```pascal
+N.AsJSON := '{"o": {"k1":"v1", "k2":"v2"}}';
+for i := 1 to N['o'].Count do  
+  N['o'].AsInteger := i;
+```
+Results in:
+```json
+{
+   "o":{
+      "k1":1,
+      "k2":2
+   }
+}
+```
+
+### Object and array setters
+Not so common out there.
 ```pascal
 N.AsJSON := '{"o": {"k1":"v1", "k2":"v2"}}';
 N['o'].AsString := 'str';
@@ -142,6 +159,27 @@ Results in:
       "k1":"str",
       "k2":"str"
    }
+}
+```
+
+### Object and array setters
+Also, not so common out there.
+```pascal
+N.AsJSON := '{ "k1": ["1", "2"], "k2": {"1": "a", "2": "b"} }';
+N['k1'].ItemType := jitObject; // convert array to object with children
+N['k2'].ItemType := jitArray ; // converte object with children to array 
+```
+Results in:
+```json
+{
+   "k1":{
+      "0":"1",
+      "1":"2"
+   },
+   "k2":[
+      "a",
+      "b"
+   ]
 }
 ```
 
