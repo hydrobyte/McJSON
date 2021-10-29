@@ -192,7 +192,7 @@ Results in:
 ```
 
 ### Inspect the content of an object
-Let's see how to see and ispect all the inner data structure, types and values of a `TMcJsonItem object.
+Let's see how to see and ispect all the inner data structure, types and values of a `TMcJsonItem` object.
 ```c++
 //---------------------------------------------------------------------------
 void
@@ -249,7 +249,7 @@ And using a example like `testInspect.json`:
 }
 ```
 
-Calling Inspect with a Json object load with testInspect:
+Calling `Inspect()` with a Json object loaded with `testInspect.json`:
 ```c++
 TMcJsonItem* Json = new TMcJsonItem();
 if (Json)
