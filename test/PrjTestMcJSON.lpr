@@ -49,7 +49,11 @@ begin
               and (N.Values[0].AsString     = 'value'  )
               and (N.Items['key'].AsString  = 'value'  );
   except
-    Result := False;
+    on E: Exception do
+    begin
+      Msg := Msg + '. Exception: ' + E.Message;
+      Result := False;
+    end;
   end;
   N.Free;
 end;
@@ -71,7 +75,11 @@ begin
               and (N['array'].Values[1].AsString  = '2.0'    )
               and (N['array'].Values[2].AsInteger = 3        );
   except
-    Result := False;
+    on E: Exception do
+    begin
+      Msg := Msg + '. Exception: ' + E.Message;
+      Result := False;
+    end;
   end;
   N.Free;
 end;
@@ -92,7 +100,11 @@ begin
               and (N['sub'].Values[1]['key2'].Key       = 'key2'   )
               and (N['sub'].Values[1]['key2'].AsInteger = 2        );
   except
-    Result := False;
+    on E: Exception do
+    begin
+      Msg := Msg + '. Exception: ' + E.Message;
+      Result := False;
+    end;
   end;
   N.Free;
 end;
@@ -108,7 +120,11 @@ begin
     N['key'].AsString := 'new value';
     Result := (N['key'].AsString = 'new value');
   except
-    Result := False;
+    on E: Exception do
+    begin
+      Msg := Msg + '. Exception: ' + E.Message;
+      Result := False;
+    end;
   end;
   N.Free;
 end;
@@ -165,7 +181,11 @@ begin
     Result := Result and (P.AsJSON = '{}')
                      and (P.Count  = 0   );
   except
-    Result := False;
+    on E: Exception do
+    begin
+      Msg := Msg + '. Exception: ' + E.Message;
+      Result := False;
+    end;
   end;
   N.Free;
   //M.Free // no! free inside N
@@ -184,7 +204,11 @@ begin
     //N['array'].Items[0].SetInt(4);        // will not compile in Delphi
     Result := False;
   except
-    Result := True;
+    on E: Exception do
+    begin
+      Msg := Msg + '. Exception: ' + E.Message;
+      Result := True;
+    end;
   end;
   N.Free;
 end;
@@ -219,7 +243,11 @@ begin
               and (M['b'].AsBoolean = False)
               and (M['n'].IsNull           );
   except
-    Result := False;
+    on E: Exception do
+    begin
+      Msg := Msg + '. Exception: ' + E.Message;
+      Result := False;
+    end;
   end;
   N.Free;
 end;
@@ -235,7 +263,11 @@ begin
     Result   :=   (N['n'].AsString = '-1.23456789E-10')
               and (N['n'].AsNumber >  -1.23456789E-00 );
   except
-    Result := False;
+    on E: Exception do
+    begin
+      Msg := Msg + '. Exception: ' + E.Message;
+      Result := False;
+    end;
   end;
   N.Free;
 end;
@@ -250,7 +282,11 @@ begin
     N.AsJSON := '{ "k": "\b\t\n\f\r\u\"\\" }';
     Result   := (N['k'].AsString = '\b\t\n\f\r\u\"\\');
   except
-    Result := False;
+    on E: Exception do
+    begin
+      Msg := Msg + '. Exception: ' + E.Message;
+      Result := False;
+    end;
   end;
   N.Free;
 end;
@@ -292,7 +328,11 @@ begin
     // if any is valid, test fails
     Result := not IsValid;
   except
-    Result := False;
+    on E: Exception do
+    begin
+      Msg := Msg + '. Exception: ' + E.Message;
+      Result := False;
+    end;
   end;
   N.Free;
 end;
@@ -304,17 +344,47 @@ begin
   Msg := 'Test: type transformations';
   N := TMcJsonItem.Create;
   try
+    Result := True;
+    // object and arrays
     N.AsJSON := '{ "k1": ["1", "2"], "k2": {"1": "a", "2": "b"} }';
     N['k1'].ItemType := jitObject;
     N['k2'].ItemType := jitArray ;
-    Result :=   (N['k1'].ItemType           = jitObject)
-            and (N['k1']['0'].AsString      = '1'      )
-            and (N['k1']['1'].AsString      = '2'      )
-            and (N['k2'].ItemType           = jitArray )
-            and (N['k2'].Values[0].AsString = 'a'      )
-            and (N['k2'].Values[1].AsString = 'b'      );
+    Result := Result and (N['k1'].ItemType           = jitObject)
+                     and (N['k1']['0'].AsString      = '1'      )
+                     and (N['k1']['1'].AsString      = '2'      )
+                     and (N['k2'].ItemType           = jitArray )
+                     and (N['k2'].Values[0].AsString = 'a'      )
+                     and (N['k2'].Values[1].AsString = 'b'      );
+    // array and value setters
+    N.AsJSON := '{ "a": ["1", "2"]}';
+    N['a'].AsInteger := 1;
+    Result := Result and (N.AsJSON = '{"a":[1,1]}');
+    N['a'].AsNumber := 1.1;
+    Result := Result and (N.AsJSON = '{"a":[1.1,1.1]}');
+    N['a'].AsString := 'str';
+    Result := Result and (N.AsJSON = '{"a":["str","str"]}');
+    N['a'].AsBoolean := True;
+    Result := Result and (N.AsJSON = '{"a":[true,true]}');
+    N['a'].AsNull := 'null';
+    Result := Result and (N.AsJSON = '{"a":[null,null]}');
+    // object and value setters
+    N.AsJSON := '{ "o": {"k1":"v1", "k2":"v2"}}';
+    N['o'].AsInteger := 1;
+    Result := Result and (N.AsJSON = '{"o":{"k1":1,"k2":1}}');
+    N['o'].AsNumber := 1.1;
+    Result := Result and (N.AsJSON = '{"o":{"k1":1.1,"k2":1.1}}');
+    N['o'].AsString := 'str';
+    Result := Result and (N.AsJSON = '{"o":{"k1":"str","k2":"str"}}');
+    N['o'].AsBoolean := True;
+    Result := Result and (N.AsJSON = '{"o":{"k1":true,"k2":true}}');
+    N['o'].AsNull := 'null';
+    Result := Result and (N.AsJSON = '{"o":{"k1":null,"k2":null}}');
   except
-    Result := False;
+    on E: Exception do
+    begin
+      Msg := Msg + '. Exception: ' + E.Message;
+      Result := False;
+    end;
   end;
   N.Free;
 end;
@@ -347,7 +417,11 @@ begin
     Result := Result and (N.AsJSON = '{"i":123}'                                  )
                      and (M.AsJSON = '{"i":123,"array":[{"k1":"v1"},{"k2":"v2"}]}');
   except
-    Result := False;
+    on E: Exception do
+    begin
+      Msg := Msg + '. Exception: ' + E.Message;
+      Result := False;
+    end;
   end;
   N.Free;
   M.Free;
@@ -374,7 +448,11 @@ begin
     Result := Result and (M.AsJSON = '{"i":123}')
                      and (P.AsJSON = '{"i":123}');
   except
-    Result := False;
+    on E: Exception do
+    begin
+      Msg := Msg + '. Exception: ' + E.Message;
+      Result := False;
+    end;
   end;
   N.Free;
   M.Free;
@@ -404,7 +482,11 @@ begin
                      and (P.AsJSON = '{"k":"v"}'        )
                      and (Q.IsEqual(P)                  );
   except
-    Result := False;
+    on E: Exception do
+    begin
+      Msg := Msg + '. Exception: ' + E.Message;
+      Result := False;
+    end;
   end;
   N.Free;
   M.Free;
@@ -441,8 +523,12 @@ begin
       // test final result
       Result := (Json.AsJSON = '{"key1":1,"key2":true,"key3":1.234,"key4":"value 1","array":[1,2,3]}');
     except
+    on E: Exception do
+    begin
+      Msg := Msg + '. Exception: ' + E.Message;
       Result := False;
     end;
+  end;
   finally
     Json.Free;
   end;

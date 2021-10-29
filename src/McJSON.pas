@@ -443,65 +443,110 @@ begin
 end;
 
 procedure TMcJsonItem.fSetAsInteger(aValue: Integer);
+var
+  i: Integer;
 begin
-  if  (Self  = nil       ) then Error(SItemNil);
-  if ((fType <> jitUnset ) and
-      (fType <> jitValue)) then Error(SItemTypeInvalid);
+  if (Self  = nil     ) then Error(SItemNil);
   // if unset, set as value
-  if (fType    =  jitUnset ) then fSetType(jitValue);
-  if (fValType <> jvtNumber) then fValType := jvtNumber;
-  // set aValue as string
-  fValue := IntToStr(aValue);
+  if (fType = jitUnset) then fSetType(jitValue);
+  // if container, set aValue for each child
+  if (fType = jitArray) or (fType = jitObject) then
+  begin
+     for i := 0 to (fChild.Count - 1) do
+       TMcJsonItem(fChild[i]).AsInteger := aValue;
+  end
+  else
+  begin
+    if (fValType <> jvtNumber) then fValType := jvtNumber;
+    // set aValue as string
+    fValue := IntToStr(aValue);
+  end;
 end;
 
 procedure TMcJsonItem.fSetAsDouble(aValue: Double);
+var
+  i: Integer;
 begin
-  if  (Self  = nil       ) then Error(SItemNil);
-  if ((fType <> jitUnset ) and
-      (fType <> jitValue)) then Error(SItemTypeInvalid);
+  if (Self  = nil     ) then Error(SItemNil);
   // if unset, set as value
-  if (fType    =  jitUnset ) then fSetType(jitValue);
-  if (fValType <> jvtNumber) then fValType := jvtNumber;
-  // set aValue as string
-  fValue := FloatToStr(aValue);
+  if (fType = jitUnset) then fSetType(jitValue);
+  // if container, set aValue for each child
+  if (fType = jitArray) or (fType = jitObject) then
+  begin
+     for i := 0 to (fChild.Count - 1) do
+       TMcJsonItem(fChild[i]).AsNumber := aValue;
+  end
+  else
+  begin
+    if (fValType <> jvtNumber) then fValType := jvtNumber;
+    // set aValue as string
+    fValue := FloatToStr(aValue);
+  end;
 end;
 
 procedure TMcJsonItem.fSetAsString(aValue: string);
+var
+  i: Integer;
 begin
-  if  (Self  = nil       ) then Error(SItemNil);
-  if ((fType <> jitUnset ) and
-      (fType <> jitValue)) then Error(SItemTypeInvalid);
+  if (Self  = nil     ) then Error(SItemNil);
   // if unset, set as value
-  if (fType    =  jitUnset ) then fSetType(jitValue);
-  if (fValType <> jvtString) then fValType := jvtString;
-  // set aValue as string
-  fValue := aValue;
+  if (fType = jitUnset) then fSetType(jitValue);
+  // if container, set aValue for each child
+  if (fType = jitArray) or (fType = jitObject) then
+  begin
+     for i := 0 to (fChild.Count - 1) do
+       TMcJsonItem(fChild[i]).AsString := aValue;
+  end
+  else
+  begin
+    if (fValType <> jvtString) then fValType := jvtString;
+    // set aValue as string
+    fValue := aValue;
+  end;
 end;
 
 procedure TMcJsonItem.fSetAsBoolean(aValue: Boolean);
+var
+  i: Integer;
 begin
-  if  (Self  = nil       ) then Error(SItemNil);
-  if ((fType <> jitUnset ) and
-      (fType <> jitValue)) then Error(SItemTypeInvalid);
+  if (Self  = nil     ) then Error(SItemNil);
   // if unset, set as value
-  if (fType    =  jitUnset  ) then fSetType(jitValue);
-  if (fValType <> jvtBoolean) then fValType := jvtBoolean;
-  // set aValue as string
-  if aValue
-    then fValue := 'true'
-    else fValue := 'false';
+  if (fType = jitUnset) then fSetType(jitValue);
+  // if container, set aValue for each child
+  if (fType = jitArray) or (fType = jitObject) then
+  begin
+     for i := 0 to (fChild.Count - 1) do
+       TMcJsonItem(fChild[i]).AsBoolean := aValue;
+  end
+  else
+  begin
+    if (fValType <> jvtBoolean) then fValType := jvtBoolean;
+    // set aValue as string
+    if aValue
+      then fValue := 'true'
+      else fValue := 'false';
+  end;
 end;
 
 procedure TMcJsonItem.fSetAsNull(aValue: string);
+var
+  i: Integer;
 begin
-  if  (Self  = nil       ) then Error(SItemNil);
-  if ((fType <> jitUnset ) and
-      (fType <> jitValue)) then Error(SItemTypeInvalid);
+  if (Self  = nil     ) then Error(SItemNil);
   // if unset, set as value
-  if (fType    =  jitUnset) then fSetType(jitValue);
-  if (fValType <> jvtNull ) then fValType := jvtNull;
-  // set aValue as string
-  fValue := aValue;
+  if (fType = jitUnset) then fSetType(jitValue);
+  // if container, set aValue for each child
+  if (fType = jitArray) or (fType = jitObject) then
+  begin
+     for i := 0 to (fChild.Count - 1) do
+       TMcJsonItem(fChild[i]).AsNull := 'null'; // ignore aValue
+  end
+  else
+  begin
+    if (fValType <> jvtNull) then fValType := jvtNull;
+    // set aValue as string
+    fValue := 'null'; // ignore aValue
+  end;
 end;
 
 function TMcJsonItem.parse(const aCode: string; aPos: Integer): Integer;
