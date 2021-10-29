@@ -1,9 +1,9 @@
 # McJSON
 A **Delphi / Lazarus / C++Builder** simple and small class for fast JSON parsing.
-At a glance:
-* [Motivation](#motivation).
-* [Examples](#examples).
-* [Use cases](#use-cases).
+
+* [Motivation](#motivation)
+* [Examples](#examples)
+* [Use cases](#use-cases)
 * [Performance Tests](#performance-tests)
 
 ## Motivation
