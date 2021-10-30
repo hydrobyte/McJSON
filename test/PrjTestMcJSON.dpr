@@ -48,7 +48,7 @@ begin
   except
     on E: Exception do
     begin
-      Msg := Msg + '. Exception: ' + E.Message;
+      Msg := Msg + #13#10 + '       Error: ' + E.Message;
       Result := False;
     end;
   end;
@@ -74,7 +74,7 @@ begin
   except
     on E: Exception do
     begin
-      Msg := Msg + '. Exception: ' + E.Message;
+      Msg := Msg + #13#10 + '       Error: ' + E.Message;
       Result := False;
     end;
   end;
@@ -99,7 +99,7 @@ begin
   except
     on E: Exception do
     begin
-      Msg := Msg + '. Exception: ' + E.Message;
+      Msg := Msg + #13#10 + '       Error: ' + E.Message;
       Result := False;
     end;
   end;
@@ -119,7 +119,7 @@ begin
   except
     on E: Exception do
     begin
-      Msg := Msg + '. Exception: ' + E.Message;
+      Msg := Msg + #13#10 + '       Error: ' + E.Message;
       Result := False;
     end;
   end;
@@ -180,7 +180,7 @@ begin
   except
     on E: Exception do
     begin
-      Msg := Msg + '. Exception: ' + E.Message;
+      Msg := Msg + #13#10 + '       Error: ' + E.Message;
       Result := False;
     end;
   end;
@@ -193,17 +193,18 @@ function Test06(out Msg: string): Boolean;
 var
   N: TMcJsonItem;
 begin
-  Msg := 'Test: out of index';
+  Msg := 'Test: object is nil';
   N := TMcJsonItem.Create;
   try
     N.AsJSON := '{ "array": [1, "2", 3] }';
+    //N['not'].Values[3].AsInteger := 4;
     N['array'].Values[3].AsInteger := 4;
     //N['array'].Items[0].SetInt(4);        // will not compile in Delphi
     Result := False;
   except
     on E: Exception do
     begin
-      Msg := Msg + '. Exception: ' + E.Message;
+      Msg := Msg + #13#10 + '       Error: ' + E.Message;
       Result := True;
     end;
   end;
@@ -242,7 +243,7 @@ begin
   except
     on E: Exception do
     begin
-      Msg := Msg + '. Exception: ' + E.Message;
+      Msg := Msg + #13#10 + '       Error: ' + E.Message;
       Result := False;
     end;
   end;
@@ -262,7 +263,7 @@ begin
   except
     on E: Exception do
     begin
-      Msg := Msg + '. Exception: ' + E.Message;
+      Msg := Msg + #13#10 + '       Error: ' + E.Message;
       Result := False;
     end;
   end;
@@ -281,7 +282,7 @@ begin
   except
     on E: Exception do
     begin
-      Msg := Msg + '. Exception: ' + E.Message;
+      Msg := Msg + #13#10 + '       Error: ' + E.Message;
       Result := False;
     end;
   end;
@@ -327,7 +328,7 @@ begin
   except
     on E: Exception do
     begin
-      Msg := Msg + '. Exception: ' + E.Message;
+      Msg := Msg + #13#10 + '       Error: ' + E.Message;
       Result := False;
     end;
   end;
@@ -379,7 +380,7 @@ begin
   except
     on E: Exception do
     begin
-      Msg := Msg + '. Exception: ' + E.Message;
+      Msg := Msg + #13#10 + '       Error: ' + E.Message;
       Result := False;
     end;
   end;
@@ -416,7 +417,7 @@ begin
   except
     on E: Exception do
     begin
-      Msg := Msg + '. Exception: ' + E.Message;
+      Msg := Msg + #13#10 + '       Error: ' + E.Message;
       Result := False;
     end;
   end;
@@ -447,7 +448,7 @@ begin
   except
     on E: Exception do
     begin
-      Msg := Msg + '. Exception: ' + E.Message;
+      Msg := Msg + #13#10 + '       Error: ' + E.Message;
       Result := False;
     end;
   end;
@@ -481,7 +482,7 @@ begin
   except
     on E: Exception do
     begin
-      Msg := Msg + '. Exception: ' + E.Message;
+      Msg := Msg + #13#10 + '       Error: ' + E.Message;
       Result := False;
     end;
   end;
@@ -489,6 +490,74 @@ begin
   M.Free;
   P.Free;
   Q.Free;
+end;
+
+function Test15(out Msg: string): Boolean;
+var
+  N: TMcJsonItem;
+  i: Integer;
+  anyPass: Boolean;
+begin
+  Msg := 'Test: exceptions';
+  N := TMcJsonItem.Create();
+  Result  := True;
+  anyPass := False;
+  for i := 1 to 7 do
+  begin
+    try
+      N.AsJSON := '{"s": "123a"}';
+      // Exception Object reference is nil
+      if (i = 1) then
+      begin
+        N['not'].AsInteger;
+        anyPass := True;
+      end
+      else if (i = 2) then
+      begin
+        N['s'].Values[1].AsInteger;
+        anyPass := True;
+      end
+      // Exception Invalid item type
+      else if (i = 3) then
+      begin
+        N['s'].AsObject;
+        anyPass := True;
+      end
+      // Exception Can't convert item "%s" with value "%s" to "%s"
+      else if (i = 4) then
+      begin
+        N['s'].AsInteger;
+        anyPass := True;
+      end
+      // Exception Can't convert item "%s" to "%s"
+      else if (i = 5) then
+      begin
+        N.AsJSON := '{"n": null}';
+        N['n'].AsInteger;
+        anyPass := True;
+      end
+      // Exception Duplicate key "%s"
+      else if (i = 6) then
+      begin
+        N.SpeedUp := False;
+        N.AsJSON := '{"k":"v", "k":"v"}';
+        anyPass := True;
+      end
+      // Exception Error while parsing text: read "%s" at pos "%s"
+      else if (i = 7) then
+      begin
+        N.AsJSON := '{"n"[:null}';
+        anyPass := True;
+      end;
+    except
+      on E: Exception do
+      begin
+        Msg := Msg + #13#10 + '       Error: ' + E.Message;
+        Result := Result and anyPass;
+      end;
+    end;
+  end;
+  N.Free;
 end;
 
 function Test99(out Msg: string): Boolean;
@@ -522,7 +591,7 @@ begin
     except
     on E: Exception do
     begin
-      Msg := Msg + '. Exception: ' + E.Message;
+      Msg := Msg + #13#10 + '       Error: ' + E.Message;
       Result := False;
     end;
   end;
@@ -552,6 +621,7 @@ begin
   Check(Test12, TotalPassed, TotalFailed);
   Check(Test13, TotalPassed, TotalFailed);
   Check(Test14, TotalPassed, TotalFailed);
+  Check(Test15, TotalPassed, TotalFailed);
   Check(Test99, TotalPassed, TotalFailed);
 
   WriteLn;
