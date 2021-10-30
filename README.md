@@ -135,6 +135,24 @@ bool Test99(AnsiString& Msg)
 ## Use Cases
 Please considere read Unit Tests in `test` folder for a complete list of `McJSON` use cases.
 
+### Parse a JSON string
+Just use the AsJSON property
+```pascal
+var
+  N: TMcJsonItem;
+begin  
+  N := TMcJsonItem.Create;
+  N.AsJSON := '{"i": 123, "f": 123.456, "s": "abc", "b": true, "n": null}';
+  // use N here
+  N.Free;
+end;  
+```
+If you want to check if a JSON string is valid:
+```pascal
+Answer := N.Check( '{"i":[123}' ); // Answer will be false
+```
+
+
 ### Array or object items
 Here is how to access all items (children) of a JSON object and change their value type and content.
 ```pascal
