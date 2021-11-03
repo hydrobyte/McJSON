@@ -4,7 +4,8 @@ A **Delphi / Lazarus / C++Builder** simple and small class for fast JSON parsing
 * [Motivation](#motivation)
 * [Examples](#examples)
 * [Use cases](#use-cases)
-* [Performance Tests](#performance-tests)
+* [Known issues](#known-issues)
+* [Performance tests](#performance-tests)
 
 ## Motivation
 Some points of interest:
@@ -299,7 +300,13 @@ object; string; Key=; Value=; JSON={"foo":"bar","array":[100,20],"arrayObj":[{"k
      value; string; Key=; Value=#2 Scapes: \b\t\n\f\r\u\"\\; JSON="#2 Scapes: \b\t\n\f\r\u\"\\"
 ```
 
-## Performance Tests
+## Known issues
+The world is not perfect and neither am I.
+Here are some known issues:
+* `McJSON` does not parse (escape) UTF-16 chars (`\u0000`) yet.
+* Trying to follow and confirm the [specification](https://www.json.org/json-en.html).
+
+## Performance tests
 A performance test have been done with the original `myJSON`, `LkJson`, `JsonTools` and `uJSON` units.
 Here is a summary of the tests.
 * Generate a JSON with 50k items like: `{... {"keyi":"valuei"}... }`

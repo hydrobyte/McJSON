@@ -132,7 +132,6 @@ resourcestring
   SItemTypeInvalid   = 'Invalid item type: expected "%s" got "%s"';
   SItemTypeConvValue = 'Can''t convert item "%s" with value "%s" to "%s"';
   SItemTypeConv      = 'Can''t convert item "%s" to "%s"';
-  //SItemKeyDublicate  = 'Duplicate key "%s"';
   SParsingError      = 'Error while parsing text: read "%s" at pos "%s"';
 
 const
@@ -205,9 +204,7 @@ begin
     // control '"' for keys and string values.
     // if not escaped, toggle opn status
     if (n = 1) and (aStr[i] = '"') then
-    begin
       opn := not opn;
-    end;
     // ignore whitespaces chars
     if not (opn) and (aStr[i] in WHITESPACE) then
       Inc(i)
@@ -772,30 +769,34 @@ end;
 
 function TMcJsonItem.readNumber(const aCode: string; aPos, aLen: Integer): Integer;
 var
-  c: Integer;
+  c, ePos: Integer;
 begin
   // we got here because current symbol was '+/-' or Digit
   c := aPos;
   // 1. sign (optional)
   if aCode[c] in SIGNS
-    then c := c + 1;
+    then Inc(c);
   // 2. some digits
   while (aCode[c] in DIGITS) do
-    c := c + 1;
+    Inc(c);
   // 3. decimal dot (optional)
   if aCode[c] = '.'
-    then c := c + 1;
+    then Inc(c);
   // 4. fractional digits (optional)
   while (aCode[c] in DIGITS) do
-    c := c + 1;
+    Inc(c);
   // 5. scientific notation ...E-01
   if LowerCase(aCode[c]) = 'e' then
   begin
-    c := c + 1;
+    ePos := c;
+    Inc(c);
     if aCode[c] in SIGNS
-      then c := c + 1;
+      then Inc(c);
     while (aCode[c] in DIGITS) do
-      c := c + 1;
+      Inc(c);
+    // valid-JSON: bad scientific number
+    if (ePos+1 = c) then
+      Error(SParsingError, 'bad number', IntToStr(c));
   end;
   // valid-JSON: not a number
   if    (aCode[c] <> ','   ) and
@@ -1138,7 +1139,6 @@ begin
     aItem.fSpeedUp := aSpeedUp;
     aItem.AsJSON   := aStr;
     Result := True;
-//    Result := (aItem.AsJSON = trimWS(aStr));
   except
     Result := False;
   end;
@@ -1216,16 +1216,6 @@ end;
 
 procedure TMcJsonItem.Error(const Msg: string; const S1: string;
                                                const S2: string;
-                                               const S3: string);
-var
-  aStr: string;
-begin
-  aStr := Format(Msg, [S1, S2, S3]);
-  raise EMcJsonException.Create(aStr);
-end;
-
-end.
-                    const S2: string;
                                                const S3: string);
 var
   aStr: string;

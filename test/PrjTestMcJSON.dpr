@@ -305,7 +305,11 @@ begin
     // value bad formats
     StrL.Add('bad value: not open'       +'='+ '{"k":value"}'         );
     StrL.Add('bad value: not close'      +'='+ '{"k":"value}'         );
-    StrL.Add('bad value: not number'     +'='+ '{"k":12345a}'         );
+    StrL.Add('bad value: not number 1'   +'='+ '{"k":12345a}'         );
+    StrL.Add('bad value: not number 2'   +'='+ '{"k":+-1234}'         );
+    StrL.Add('bad value: not number 3'   +'='+ '{"k":1234E}'          );
+    StrL.Add('bad value: not number 4'   +'='+ '{"k":1234E+-1}'       );
+    StrL.Add('bad value: not number 5'   +'='+ '{"k":1234E+a}'        );
     StrL.Add('bad value: invalid'        +'='+ '{"k":"v"a}'           );
     // values not recognized
     StrL.Add('bad value: not keyword'    +'='+ '{"k":truee}'          );
