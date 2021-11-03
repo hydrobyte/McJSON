@@ -50,15 +50,21 @@ type
     procedure fSetAsBoolean(aValue: Boolean);
     procedure fSetAsNull(aValue: string);
 
-    // parse with single pass per string 
-    function parse(const aCode: string; aPos: Integer = 1): Integer;
+    // parse with single pass per string
+    function parse(const aCode: string; aPos, aLen: Integer): Integer;
     // read methods used by parse
-    function readValue(const aCode: string; aPos: Integer): Integer;
-    function readObject(const aCode: string; aPos: Integer): Integer;
-    function readArray(const aCode: string; aPos: Integer): Integer;
-    function readNumber(const aCode: string; aPos: Integer): Integer;
-    function readBoolean(const aCode: string; aPos: Integer): Integer;
-    function readNull(const aCode: string; aPos: Integer): Integer;
+    function readString(const aCode: string; out aStr:string; aPos, aLen: Integer): Integer;
+    function readChar(const aCode: string; aChar: Char; aPos, aLen: Integer): Integer;
+    function readKeyword(const aCode, aKeyword: string; aPos, aLen: Integer): Integer;
+    function readValue(const aCode: string; aPos, aLen: Integer): Integer;
+    function readObject(const aCode: string; aPos, aLen: Integer): Integer;
+    function readArray(const aCode: string; aPos, aLen: Integer): Integer;
+    function readNumber(const aCode: string; aPos, aLen: Integer): Integer;
+    function readBoolean(const aCode: string; aPos, aLen: Integer): Integer;
+    function readNull(const aCode: string; aPos, aLen: Integer): Integer;
+    // aux functions used in ToString
+    function sFormat(aHuman: Boolean): string;
+    function sFormatItem(aStrS: TStringStream; const aIn, aNL, aSp: string): string;
 
   public
     property Count   : Integer    read fGetCount;
@@ -102,7 +108,7 @@ type
     function Check(const aStr: string; aSpeedUp: Boolean = False): Boolean;
 
     function ToString: string; overload;
-    function ToString(aHuman: Boolean = False; const aIndent: string = ''): string; overload;
+    function ToString(aHuman: Boolean = False): string; overload;
 
     procedure LoadFromFile(const aFileName: string; aUTF8: Boolean = True);
     procedure SaveToFile(const aFileName: string; aHuman: Boolean = True);
@@ -126,7 +132,7 @@ resourcestring
   SItemTypeInvalid   = 'Invalid item type: expected "%s" got "%s"';
   SItemTypeConvValue = 'Can''t convert item "%s" with value "%s" to "%s"';
   SItemTypeConv      = 'Can''t convert item "%s" to "%s"';
-  SItemKeyDublicate  = 'Duplicate key "%s"';
+  //SItemKeyDublicate  = 'Duplicate key "%s"';
   SParsingError      = 'Error while parsing text: read "%s" at pos "%s"';
 
 const
@@ -160,8 +166,25 @@ begin
   end;
 end;
 
+function escapeChar(const aStr: string; aPos: Integer): Integer;
+var
+  c: Integer;
+begin
+  case aStr[aPos] of
+    '\':
+    begin
+      if (aStr[aPos+1] in ESCAPES)
+        then c := 2
+        else c := 1;
+    end;
+    else
+      c := 1;
+  end;
+  Result := c;
+end;
+
 // removes all the whitespaces from the begining of the line
-function trimWS(aStr: string): string;
+function trimWS(const aStr: string): string;
 var
   i, j, k, n, len: Integer;
   sRes: string;
@@ -178,16 +201,7 @@ begin
   begin
     // check escapes
     if (i < len) then
-      case aStr[i] of
-        '\':
-        begin
-          if (aStr[i+1] in ESCAPES)
-            then n := 2
-            else n := 1;
-        end;
-        else
-          n := 1;
-      end;
+      n := escapeChar(aStr, i);
     // control '"' for keys and string values.
     // if not escaped, toggle opn status
     if (n = 1) and (aStr[i] = '"') then
@@ -286,7 +300,7 @@ end;
 function TMcJsonItem.fGetAsJSON(): string;
 begin
   if (Self = nil) then Error(SItemNil, 'get as JSON');
-  Result := ToString(False, '');
+  Result := ToString(False);
 end;
 
 function TMcJsonItem.fGetAsObject: TMcJsonItem;
@@ -438,11 +452,17 @@ begin
 end;
 
 procedure TMcJsonItem.fSetAsJSON(aStr: string);
+var
+  c, len: Integer;
 begin
   if (Self = nil) then Error(SItemNil, 'set as JSON');
   Clear;
   aStr := trimWS(aStr);
-  Self.parse(aStr);
+  len  := Length(aStr);
+  c := Self.parse(aStr, 1, len);
+  // valid-JSON
+  if (c < len) then
+    Error(SParsingError, 'bad json', IntToStr(len));
 end;
 
 procedure TMcJsonItem.fSetAsObject(aValue: TMcJsonItem);
@@ -570,88 +590,55 @@ begin
   end;
 end;
 
-function TMcJsonItem.parse(const aCode: string; aPos: Integer): Integer;
+function TMcJsonItem.parse(const aCode: string; aPos, aLen: Integer): Integer;
 begin
   Result := aPos;
-
-  if (Length(aCode) < aPos) or
-     (aCode[aPos]   = #0  ) then
+  // check position
+  if (aPos > aLen) then
     Exit;
-
   // now in the first character our open parenthesis
   case aCode[aPos] of
-    '"':                Result := readValue(aCode, aPos);   // generic value (text)
-    '{':                Result := readObject(aCode, aPos);  // Object
-    '[':                Result := readArray(aCode, aPos);   // Array
-    '0'..'9', '+', '-': Result := readNumber(aCode, aPos);  // number
-    't', 'T', 'f', 'F': Result := readBoolean(aCode, aPos); // boolean
-    'n', 'N':           Result := readNull(aCode, aPos);    // null
+    '{':                aPos := readObject (aCode, aPos, aLen); // recursive
+    '[':                aPos := readArray  (aCode, aPos, aLen); // recursive
+    '"':                aPos := readValue  (aCode, aPos, aLen);
+    '0'..'9', '+', '-': aPos := readNumber (aCode, aPos, aLen);
+    't', 'T', 'f', 'F': aPos := readBoolean(aCode, aPos, aLen);
+    'n', 'N':           aPos := readNull   (aCode, aPos, aLen);
     else
     begin
-      // Should raise an exception here
-      raise EMcJsonException.CreateFmt('JSON parsing error at char %s', [aPos]);
-      Result := aPos;
+      // valid-JSON
+      Error(SParsingError, 'invalid char', IntToStr(aPos));
     end;
   end;
+  // move on
+  Result := aPos;
 end;
 
-function TMcJsonItem.readValue(const aCode: string; aPos: Integer): Integer;
+function TMcJsonItem.readObject(const aCode: string; aPos, aLen: Integer): Integer;
 var
-  c, len: Integer;
-begin
-  // we get here because current symbol is '"'
-  c   := aPos+1;
-  len := Length(aCode);
-  // parse a value"
-  while (aCode[c] <> '"') and (c <= len) do
-  begin
-    case aCode[c] of
-      '\':
-      begin
-        if (aCode[c+1] in ESCAPES)
-          then c := c + 2
-          else c := c + 1;
-      end;
-      else
-        c := c + 1;
-    end;
-  end;
-
-  // valid-JSON 
-  if (c > len) then Error(SParsingError, 'value' + IntToStr(c));
-
-  Self.fSetType(jitValue);
-  Self.fValType := jvtString;
-  Self.fValue   := System.Copy(aCode, aPos+1, c-aPos-1); // val" -> val
-
-  Result := c+1;
-end;
-
-function TMcJsonItem.readObject(const aCode: string; aPos: Integer): Integer;
-var
-  c, ct, len: Integer;
+  c: Integer;
   aItem: TMcJsonItem;
   sKey : string;
+  first: Boolean;
 begin
-  // we get here because current symbol was '{'
-  c   := aPos+1; // char iterator
-  ct  := aPos;   // char iterator current object
-  len := Length(aCode);
+  // we got here because current symbol was '{'
+  c  := aPos+1; // char iterator
   // set item type
   Self.fSetType(jitObject);
+  first := True;
   // reading values until we reach a '}'
-  while (aCode[c] <> '}') and (c <= len) do
+  while (aCode[c] <> '}') and (c <= aLen) do
   begin
-    // parsing a key
-    while (aCode[c] <> ':') and (c <= len) do
+    // parse ','
+    if (not first) then
     begin
-      // valid-JSON
-      if (aCode[c] in OPENS ) then Error(SParsingError, 'object', IntToStr(c));
-      if (aCode[c] in CLOSES) then Error(SParsingError, 'object', IntToStr(c));
-      c := c + 1;
+      c := readChar(aCode, ',', c, aLen);
+      Inc(c);
     end;
+    first := False;
+    // parsing a "key"
+    c := readString(aCode, sKey, c, aLen);
     // create a new item with parsed key
-    sKey := System.Copy(aCode, ct+2, c-ct-3); //{"key":val -> key
     // check duplicate (subject to speed up flag)
     aItem := nil;
     if (fSpeedUp) then
@@ -661,52 +648,134 @@ begin
       // valid-JSON
       if (Self.IndexOf(sKey) < 0)
         then aItem := Self.Add(sKey)
-        else Error(SItemKeyDublicate, sKey);
+        else Error(SParsingError, 'duplicated key ' + sKey, IntToStr(c));
     end;
+    // parse ':'
+    c := readChar(aCode, ':', c+1, aLen);
     // parsing a value (recursive)
-    if (aItem <> nil)
-      then c := aItem.parse(aCode, c+1);
-    // skipping to the next pair
-    if (aCode[c] = ',') then
-    begin
-      ct := c;
-      Inc(c); 
-    end;
+    if (aItem <> nil) then
+      c := aItem.parse(aCode, c+1, aLen);
+    // move on
+    Inc(c);
   end;
-  Result := c+1;
+  // valid-JSON
+  if (c > aLen) and (aCode[aLen] <> '}') then
+    Error(SParsingError, 'bad object', IntToStr(aLen));
+  // stop at '}'
+  Result := c;
 end;
 
-function TMcJsonItem.readArray(const aCode: string; aPos: Integer): Integer;
+function TMcJsonItem.readArray(const aCode: string; aPos, aLen: Integer): Integer;
 var
-  c, len: Integer;
+  c: Integer;
   aItem: TMcJsonItem;
+  first: Boolean;
 begin
-  // we get here because current symbol was '['
-  c   := aPos+1;
-  len := Length(aCode);
+  // we got here because current symbol was '['
+  c := aPos+1;
   // set item type
   Self.fSetType(jitArray);
+  first := True;
   // reading values until we reach a ']'
-  while (aCode[c] <> ']') and (c <= len) do
+  while (aCode[c] <> ']') and (c <= aLen) do
   begin
-    // valid-JSON
-    if (aCode[c] = '[') then Error(SParsingError, 'array', IntToStr(c));
+    // parse ','
+    if (not first) then
+    begin
+      c := readChar(aCode, ',', c, aLen);
+      Inc(c);
+    end;
+    first := False;
     // Creating a new value (here explicity whith no key)
     aItem := Self.Add();
     // parsing values (recursive)
-    c := aItem.parse(aCode, c); // 1,2,3
-    if (aCode[c] = ',')
-      then Inc(c);
+    c := aItem.parse(aCode, c, aLen); // 1,2,3 or {...},{...}
+    if (c > aLen) then
+      Error(SParsingError, 'bad array', IntToStr(aLen));
+    // move on
+    Inc(c);
   end;
-  Result := c+1;
+  // valid-JSON
+  if (c = aLen) and (aCode[c] <> ']') then
+    Error(SParsingError, 'bad object', IntToStr(aLen));
+  // stop at '}'
+  Result := c;
 end;
 
-function TMcJsonItem.readNumber(const aCode: string; aPos: Integer): Integer;
+function TMcJsonItem.readString(const aCode: string; out aStr:string; aPos, aLen: Integer): Integer;
 var
   c: Integer;
 begin
-  // we get here because current symbol was '+/-' or Digit
-  c := aPos+1;
+  aStr := '';
+  c    := aPos;
+  if (aCode[c] = '"') then
+  begin
+    Inc(c);
+    while (aCode[c] <> '"') and (c <= aLen) do
+    begin
+      // do escapes
+      if (c < aLen)
+        then Inc(c, escapeChar(aCode, c))
+        else Inc(c);
+    end;
+    // copy between '"'
+    if (aCode[aPos] = '"') and
+       (aCode[c   ] = '"') then
+    begin
+      aStr := System.Copy(aCode, aPos+1, c-aPos-1); // "string" -> string
+    end;
+  end;
+  // stop at '"'
+  Result := c;
+end;
+
+function TMcJsonItem.readChar(const aCode: string; aChar: Char; aPos, aLen: Integer): Integer;
+begin
+  if ( aCode[aPos] <> aChar ) then
+    Error(SParsingError, 'expected ' + aChar, IntToStr(aPos));
+  // stop at aChar
+  Result := aPos;
+end;
+
+function TMcJsonItem.readKeyword(const aCode, aKeyword: string; aPos, aLen: Integer): Integer;
+var
+  len: Integer;
+  sAux: string;
+begin
+  len  := Length(aKeyword);
+  sAux := System.Copy(aCode, aPos, len);
+  if (Lowercase(sAux) <> aKeyword) then
+    Error(SParsingError, 'invalid keyword "' + sAux + '"', IntToStr(aPos));
+  // stop at keyword last char
+  Result := aPos + len - 1;
+end;
+
+function TMcJsonItem.readValue(const aCode: string; aPos, aLen: Integer): Integer;
+var
+  c: Integer;
+  sVal: string;
+begin
+  // we got here because current symbol is '"'
+  c := aPos;
+  // parse a "value"
+  c := readString(aCode, sVal, c, aLen);
+  // valid-JSON
+  if (c > aLen) then
+    Error(SParsingError, 'bad value', IntToStr(aLen));
+  // set item and value types
+  Self.fSetType(jitValue);
+  Self.fValType := jvtString;
+  Self.fValue   := sVal; // "value" -> value
+  // stop at '"'
+  Result := c;
+end;
+
+function TMcJsonItem.readNumber(const aCode: string; aPos, aLen: Integer): Integer;
+var
+  c: Integer;
+begin
+  // we got here because current symbol was '+/-' or Digit
+  c := aPos;
   // 1. sign (optional)
   if aCode[c] in SIGNS
     then c := c + 1;
@@ -728,83 +797,157 @@ begin
     while (aCode[c] in DIGITS) do
       c := c + 1;
   end;
-  // valid-JSON
+  // valid-JSON: not a number
   if    (aCode[c] <> ','   ) and
     not (aCode[c] in CLOSES) then
-    Error(SParsingError, 'number', IntToStr(c));
+    Error(SParsingError, 'bad number', IntToStr(c));
   // Result
   Self.fSetType(jitValue);
   Self.fValType := jvtNumber;
   Self.fValue   := System.Copy(aCode, aPos, c-aPos);
+  // go back one char
+  if (aCode[c] = ','    ) or
+     (aCode[c] in CLOSES) then
+    Dec(c);
+  // stop at number last char
   Result := c;
 end;
 
-function TMcJsonItem.readBoolean(const aCode: string; aPos: Integer): Integer;
+function TMcJsonItem.readBoolean(const aCode: string; aPos, aLen: Integer): Integer;
 var
-  len: Integer;
+  c: Integer;
   sAux: string;
 begin
-  // we get here because current symbol was 't/T' or 'f/F'
-  len := 0;
+  // we got here because current symbol was 't/T' or 'f/F'
+  c    := aPos;
+  sAux := '';
   // check boolean value 'true'
   if (aCode[aPos] = 't') or
      (aCode[aPos] = 'T') then
   begin
-    len  := 4;
-    sAux := System.Copy(aCode, aPos, len);
-    if LowerCase(sAux) = 'true' then
-      Self.fValue := 'true'
-    else
-      // valid-JSON
-      Error(SParsingError, 'boolean', IntToStr(aPos));
+    c := readKeyword(aCode, 'true', c, aLen);
+    Self.fValue := 'true';
   end
   // check boolean value 'false'
   else if (aCode[aPos] = 'f') or
           (aCode[aPos] = 'F') then
   begin
-    len  := 5;
-    sAux := System.Copy(aCode, aPos, len);
-    if LowerCase(sAux) = 'false' then
-      Self.fValue := 'false'
-    else
-      // valid-JSON
-      Error(SParsingError, 'boolean', IntToStr(aPos));
+    c := readKeyword(aCode, 'false', c, aLen);
+    Self.fValue := 'false';
   end;
   // set item and value types
-  if (len > 0) then
-  begin
-    Self.fSetType(jitValue);
-    Self.fValType := jvtBoolean;
-  end;
-  Result := aPos+len;
+  Self.fSetType(jitValue);
+  Self.fValType := jvtBoolean;
+  // stop at keyword last char
+  Result := c;
 end;
 
-function TMcJsonItem.readNull(const aCode: string; aPos: Integer): Integer;
+function TMcJsonItem.readNull(const aCode: string; aPos, aLen: Integer): Integer;
 var
-  len: Integer;
+  c: Integer;
   sAux: string;
 begin
-  // we get here because current symbol was 'n/N'
-  len := 0;
+  // we got here because current symbol was 'n/N'
+  c    := aPos;
+  sAux := '';
   // check if null
   if (aCode[aPos] = 'n') or
      (aCode[aPos] = 'N') then
   begin
-    len  := 4;
-    sAux := System.Copy(aCode, aPos, len);
-    if LowerCase(sAux) = 'null' then
-      Self.fValue := 'null'
-    else
-      // valid-JSON
-      Error(SParsingError, 'null', IntToStr(aPos));
+    c := readKeyword(aCode, 'null', c, aLen);
+    Self.fValue := 'null';
   end;
   // set item and value types
-  if (len > 0) then
-  begin
-    Self.fSetType(jitValue);
-    Self.fValType := jvtNull;
+  Self.fSetType(jitValue);
+  Self.fValType := jvtNull;
+  // stop at keyword last char
+  Result := c;
+end;
+
+function TMcJsonItem.sFormat(aHuman: Boolean): string;
+var
+  strS: TStringStream;
+  sNL, sSp: string;
+begin
+  strS := TStringStream.Create('');
+  try
+    // new line
+    if aHuman
+      then sNL := #13#10
+      else sNL := '';
+    // key value separator
+    if (aHuman)
+      then sSp := ': '
+      else sSp := ':';
+    // call format item recursively
+    SFormatItem(strS, '', sNL, sSp);
+    // final result;
+    Result := strS.DataString;
+  finally
+    strS.Free;
   end;
-  Result := aPos+len;
+end;
+
+function TMcJsonItem.sFormatItem(aStrS: TStringStream; const aIn, aNL, aSp: string): string;
+var
+  i, len: Integer;
+  sGoIn: string;
+begin
+  Result := '';
+  sGoIn  := '';
+
+  if (Self = nil) then
+    Exit;
+
+  case Self.fType of
+    // format JSON object
+    jitObject:
+    begin
+      if (fKey <> '') then
+        aStrS.WriteString(Qot(fKey) + aSp);
+      aStrS.WriteString('{' + aNL);
+      len := Self.Count - 1;
+      // use aSp to define if aHuman is true.
+      if (aSp <> ':') then sGoIn := aIn + '  ';
+      // mount recursively
+      for i := 0 to len do
+      begin
+        aStrS.WriteString(sGoIn);
+        aStrS.WriteString(TMcJsonItem(fChild[i]).sFormatItem(aStrS, sGoIn, aNL, aSP) );
+        if ( i < len ) then
+          aStrS.WriteString(',' + aNL);
+      end;
+      aStrS.WriteString(aNL + aIn + '}');
+    end;
+    // format JSON array
+    jitArray:
+    begin
+      if (fKey <> '') then
+        aStrS.WriteString(Qot(fKey) + aSp);
+      aStrS.WriteString('[' + aNL);
+      len := Self.Count - 1;
+      // use aSp to define if aHuman is true.
+      if (aSp <> ':') then sGoIn := aIn + '  ';
+      // mount recursively
+      for i := 0 to len do
+      begin
+        aStrS.WriteString(sGoIn);
+        aStrS.WriteString(TMcJsonItem(fChild[i]).SFormatItem(aStrS, sGoIn, aNL, aSP) );
+        if ( i < len ) then
+          aStrS.WriteString(','+ aNL);
+      end;
+      aStrS.WriteString(aNL + aIn + ']');
+    end;
+    // format JSON key:value pair
+    jitValue:
+    begin
+      if (fKey <> '') then
+        aStrS.WriteString(Qot(fKey) + aSp);
+      if (fValType = jvtString)
+        then aStrS.WriteString(Qot(fValue))
+        else aStrS.WriteString(    fValue );
+    end;
+  end;
 end;
 
 { ---------------------------------------------------------------------------- }
@@ -995,6 +1138,7 @@ begin
     aItem.fSpeedUp := aSpeedUp;
     aItem.AsJSON   := aStr;
     Result := True;
+//    Result := (aItem.AsJSON = trimWS(aStr));
   except
     Result := False;
   end;
@@ -1003,71 +1147,12 @@ end;
 
 function TMcJsonItem.ToString: string;
 begin
-  Result := ToString(False, '');
+  Result := sFormat(False);
 end;
 
-function TMcJsonItem.ToString(aHuman: Boolean; const aIndent: string): string;
-
-  function EnumItems: string;
-  var
-    i, len: Integer;
-    aNewInd: string;
-    sNL: string;
-  begin
-    if (Self = nil) or (Self.Count = 0) then
-    begin
-      Result := '';
-      Exit;
-    end;
-    // new line
-    if aHuman
-      then sNL := #13#10
-      else sNL := '';
-    // indentation (used in recursive loop)
-    if aHuman
-      then aNewInd := aIndent + '  '
-      else aNewInd := '';
-    // init
-    Result := sNL;
-    len    := Self.Count - 1;
-    // mount recursively
-    for i := 0 to len do
-    begin
-      Result := Result + TMcJsonItem(fChild.Items[i]).ToString(aHuman, aNewInd);
-      if (i < len)
-        then Result := Result + ',' + sNL
-        else Result := Result + sNL + aIndent;
-    end;
-  end;
-
-  function QuoteValue(const aValue: string): string;
-  begin
-    Result := Self.fValue;
-    if (Self.fValType = jvtString) then
-      Result := Qot(Self.fValue);
-  end;
-
-var
-  sPrefix: string;
-  sSp: string;
+function TMcJsonItem.ToString(aHuman: Boolean): string;
 begin
-  Result := '';
-  if (Self =  nil) then Error(SItemNil, 'to string');
-  // key value separator
-  if (aHuman)
-    then sSp := ': '
-    else sSp := ':';
-  // key as a prefix 
-  if (Self <> nil) and (fKey <> '')
-    then sPrefix := Qot(fKey) + sSp
-    else sPrefix := '';
-  // mount
-  case fType of
-    jitObject: Result := aIndent + sPrefix + '{' + EnumItems + '}';
-    jitArray : Result := aIndent + sPrefix + '[' + EnumItems + ']';
-    else if (fValue <> '') then
-      Result := aIndent + sPrefix + QuoteValue(fValue);
-  end;
+  Result := sFormat(aHuman);
 end;
 
 procedure TMcJsonItem.LoadFromFile(const aFileName: string; aUTF8: Boolean);
@@ -1104,7 +1189,7 @@ begin
   try
     AssignFile(aFile, aFileName);
     Rewrite(aFile);
-    Write(aFile, ToString(aHuman, ''));
+    Write(aFile, ToString(aHuman));
     if (IOResult <> 0) then
       raise EMcJsonException.CreateFmt('JSON: Failed to save %s', [aFileName]);
   finally
@@ -1131,6 +1216,16 @@ end;
 
 procedure TMcJsonItem.Error(const Msg: string; const S1: string;
                                                const S2: string;
+                                               const S3: string);
+var
+  aStr: string;
+begin
+  aStr := Format(Msg, [S1, S2, S3]);
+  raise EMcJsonException.Create(aStr);
+end;
+
+end.
+                    const S2: string;
                                                const S3: string);
 var
   aStr: string;

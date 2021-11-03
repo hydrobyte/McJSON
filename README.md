@@ -7,7 +7,7 @@ A **Delphi / Lazarus / C++Builder** simple and small class for fast JSON parsing
 * [Performance Tests](#performance-tests)
 
 ## Motivation
-Some points of interest test:
+Some points of interest:
  * Simple Object-Pascal native code using TList as internal data structure.
  * Single-pass string parser. 
  * Compatible (aimed):
@@ -17,9 +17,10 @@ Some points of interest test:
  * Tested with:
    * BDS 2006 (Delphi and BCP)
    * Lazarus 2.3.0 (FPC 3.2.2)
-   * C++Builder 10.2.
+   * C++Builder XE2 and 10.2.
  * Just one unit (`McJSON`), just one class(`TMcJsonItem`).
  * Inspired by [badunius/myJSON](https://github.com/badunius/myJSON).
+ * Improved parser after applying [Tan Li Hau's](https://lihautan.com/json-parser-with-javascript/#understand-the-grammar) article.
  * Performance [tests](#performance-tests) using C++Builder and comparing:
    *  [myJSON](https://github.com/badunius/myJSON) 
    *  [LkJson](https://sourceforge.net/projects/lkjson/)
@@ -53,12 +54,12 @@ begin
         Json['array'].Add.AsInteger := i;
       // save a backup to file
       if (Json['array'].Count = 3) then
-        Json.SaveToFile('example.json');
+        Json.SaveToFile('test99.json');
       // remove an item
       Json.Delete('array');
       // oops, load the backup
       if (Json.Count = 4) then
-        Json.LoadFromFile('example.json');
+        Json.LoadFromFile('test99.json');
       // test final result
       Result := (Json.AsJSON = '{"key1":1,"key2":true,"key3":1.234,"key4":"value 1","array":[1,2,3]}');
     except
@@ -69,7 +70,7 @@ begin
   end;
 end;
 ```
-Will produce `\test\example.json`:
+Will produce `\test\test99.json`:
 ```json
 {
   "key1": 1,
@@ -109,12 +110,12 @@ bool Test99(AnsiString& Msg)
         Json->Items["array"]->Add()->AsInteger = i;
       // save a backup to file
       if (Json->Items["array"]->Count == 3)
-        Json->SaveToFile("example.json");
+        Json->SaveToFile("test99.json");
       // remove an item
       Json->Delete("array");
       // oops, load the backup
       if (Json->Count == 4)
-        Json->LoadFromFile("example.json");
+        Json->LoadFromFile("test99.json");
       // test final result
       Result = (Json->AsJSON ==
                 "{\"key1\":1,\"key2\":true,\"key3\":1.234,\"key4\":\"value 1\",\"array\":[1,2,3]}");      
@@ -149,7 +150,9 @@ end;
 ```
 If you want to check if a JSON string is valid:
 ```pascal
-Answer := N.Check( '{"i":[123}' ); // Answer will be false
+Answer := N.Check( '{"i":[123}' ); 
+// Answer will be false due to raise exception:
+// Error while parsing text: read "expected ," at pos "10"
 ```
 
 
@@ -211,7 +214,7 @@ Results in:
 ```
 
 ### Inspect the content of an object
-Let's see how to isnpect all the inner data structure, types and values of a `TMcJsonItem` object.
+Let's see how to inspect all the inner data structure, types and values of a `TMcJsonItem` object.
 ```c++
 //---------------------------------------------------------------------------
 void

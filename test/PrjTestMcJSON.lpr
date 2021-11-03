@@ -5,6 +5,7 @@ program PrjTestMcJSON;
 {$H+}
 
 uses
+  Classes,
   SysUtils,
   McJSON;
 
@@ -13,7 +14,7 @@ type
   TTest = function(out Msg: string): Boolean;
 
 var
-  s: string;
+  s, sIndent: string;
 
 procedure Check(Test: TTest; var Passed, Failed: Integer);
 var
@@ -35,11 +36,10 @@ function Test01(out Msg: string): Boolean;
 var
   N: TMcJsonItem;
 begin
-  Msg := 'Test: parse simple object';
+  Msg := 'Test 01: parse simple object';
   N := TMcJsonItem.Create;
   try
     N.AsJSON := '{ "key": "value" }';
-    s:= N.AsJSON;
     Result   :=   (N.ItemType               = jitObject)
               and (N.Count                  = 1        )
               and (N.Key                    = ''       )
@@ -51,7 +51,7 @@ begin
   except
     on E: Exception do
     begin
-      Msg := Msg + #13#10 + '       Error: ' + E.Message;
+      Msg := Msg + #13#10 + sIndent + 'Error: ' + E.Message;
       Result := False;
     end;
   end;
@@ -62,11 +62,10 @@ function Test02(out Msg: string): Boolean;
 var
   N: TMcJsonItem;
 begin
-  Msg := 'Test: parse simple array';
+  Msg := 'Test 02: parse simple array';
   N := TMcJsonItem.Create;
   try
     N.AsJSON := '{ "array": [1, 2.0, "3"] }';
-    s:= N.AsJSON;
     Result   :=   (N.ItemType                     = jitObject)
               and (N.Count                        = 1        )
               and (N['array'].ItemType            = jitArray )
@@ -77,7 +76,7 @@ begin
   except
     on E: Exception do
     begin
-      Msg := Msg + #13#10 + '       Error: ' + E.Message;
+      Msg := Msg + #13#10 + sIndent + 'Error: ' + E.Message;
       Result := False;
     end;
   end;
@@ -88,7 +87,7 @@ function Test03(out Msg: string): Boolean;
 var
   N: TMcJsonItem;
 begin
-  Msg := 'Test: parse simple sub object array';
+  Msg := 'Test 03: parse simple sub object array';
   N := TMcJsonItem.Create;
   try
     N.AsJSON := '{ "sub": [{"key1": 1}, {"key2": 2}] }';
@@ -102,7 +101,7 @@ begin
   except
     on E: Exception do
     begin
-      Msg := Msg + #13#10 + '       Error: ' + E.Message;
+      Msg := Msg + #13#10 + sIndent + 'Error: ' + E.Message;
       Result := False;
     end;
   end;
@@ -113,7 +112,7 @@ function Test04(out Msg: string): Boolean;
 var
   N: TMcJsonItem;
 begin
-  Msg := 'Test: simple object value change';
+  Msg := 'Test 04: simple object value change';
   N := TMcJsonItem.Create;
   try
     N.AsJSON := '{ "key": "value" }';
@@ -122,7 +121,7 @@ begin
   except
     on E: Exception do
     begin
-      Msg := Msg + #13#10 + '       Error: ' + E.Message;
+      Msg := Msg + #13#10 + sIndent + 'Error: ' + E.Message;
       Result := False;
     end;
   end;
@@ -133,7 +132,7 @@ function Test05(out Msg: string): Boolean;
 var
   N, M, P, Q: TMcJsonItem;
 begin
-  Msg := 'Test: Add, Remove functions';
+  Msg := 'Test 05: Add, Remove functions';
   N := TMcJsonItem.Create;
   M := TMcJsonItem.Create;
   P := TMcJsonItem.Create;
@@ -183,7 +182,7 @@ begin
   except
     on E: Exception do
     begin
-      Msg := Msg + #13#10 + '       Error: ' + E.Message;
+      Msg := Msg + #13#10 + sIndent + 'Error: ' + E.Message;
       Result := False;
     end;
   end;
@@ -196,7 +195,7 @@ function Test06(out Msg: string): Boolean;
 var
   N: TMcJsonItem;
 begin
-  Msg := 'Test: object is nil';
+  Msg := 'Test 06: object is nil';
   N := TMcJsonItem.Create;
   try
     N.AsJSON := '{ "array": [1, "2", 3] }';
@@ -207,7 +206,7 @@ begin
   except
     on E: Exception do
     begin
-      Msg := Msg + #13#10 + '       Error: ' + E.Message;
+      Msg := Msg + #13#10 + sIndent + 'Error: ' + E.Message;
       Result := True;
     end;
   end;
@@ -219,10 +218,11 @@ var
   N, M: TMcJsonItem;
   Aux: Boolean;
 begin
-  Msg := 'Test: getters and setters';
+  Msg := 'Test 07: getters and setters';
   N := TMcJsonItem.Create;
   try
     N.AsJSON := '{ "i": 123, "f": 123.456, "s": "abc", "b": True, "n": Null }';
+    s := N.ToString(true);
     // changes
     N['i'].AsInteger := 321;
     N['f'].AsNumber  := 456.123;
@@ -246,7 +246,7 @@ begin
   except
     on E: Exception do
     begin
-      Msg := Msg + #13#10 + '       Error: ' + E.Message;
+      Msg := Msg + #13#10 + sIndent + 'Error: ' + E.Message;
       Result := False;
     end;
   end;
@@ -257,7 +257,7 @@ function Test08(out Msg: string): Boolean;
 var
   N: TMcJsonItem;
 begin
-  Msg := 'Test: numbers: scientific notation';
+  Msg := 'Test 08: numbers: scientific notation';
   N := TMcJsonItem.Create;
   try
     N.AsJSON := '{ "n": -1.23456789E-10 }';
@@ -266,7 +266,7 @@ begin
   except
     on E: Exception do
     begin
-      Msg := Msg + #13#10 + '       Error: ' + E.Message;
+      Msg := Msg + #13#10 + sIndent + 'Error: ' + E.Message;
       Result := False;
     end;
   end;
@@ -277,7 +277,7 @@ function Test09(out Msg: string): Boolean;
 var
   N: TMcJsonItem;
 begin
-  Msg := 'Test: escapes';
+  Msg := 'Test 09: escapes';
   N := TMcJsonItem.Create;
   try
     N.AsJSON := '{ "k": "\b\t\n\f\r\u\"\\" }';
@@ -285,7 +285,7 @@ begin
   except
     on E: Exception do
     begin
-      Msg := Msg + #13#10 + '       Error: ' + E.Message;
+      Msg := Msg + #13#10 + sIndent + 'Error: ' + E.Message;
       Result := False;
     end;
   end;
@@ -294,55 +294,119 @@ end;
 
 function Test10(out Msg: string): Boolean;
 var
+  StrL: TStringList;
+  i: Integer;
   N: TMcJsonItem;
-  IsValid: Boolean;
+  anyPass: Boolean;
+  sName, sTest: string;
 begin
-  Msg := 'Test: invalid JSON';
+  Msg := 'Test 10: invalid JSON';
+  StrL := TStringList.Create;
   N := TMcJsonItem.Create;
-  IsValid := False;
+  anyPass := False;
   try
     // value bad formats
-    IsValid := IsValid or N.Check( '{ "k": value" }' );
-    IsValid := IsValid or N.Check( '{ "k": "value }' );
-    IsValid := IsValid or N.Check( '{ "k": 12345a }' );
-    IsValid := IsValid or N.Check( '{ "k": 12"45a }' );
+    StrL.Add('bad value: not open'       +'='+ '{"k":value"}'         );
+    StrL.Add('bad value: not close'      +'='+ '{"k":"value}'         );
+    StrL.Add('bad value: not number'     +'='+ '{"k":12345a}'         );
+    StrL.Add('bad value: invalid'        +'='+ '{"k":"v"a}'           );
     // values not recognized
-    IsValid := IsValid or N.Check( '{ "k": truee }' );
-    IsValid := IsValid or N.Check( '{ "k": falsi }' );
-    IsValid := IsValid or N.Check( '{ "k": nil   }' );
+    StrL.Add('bad value: not keyword'    +'='+ '{"k":truee}'          );
+    StrL.Add('bad value: not keyword'    +'='+ '{"k":falsi}'          );
+    StrL.Add('bad value: not keyword'    +'='+ '{"k":nil  }'          );
     // key bad formats
-    IsValid := IsValid or N.Check( '{ "k: "value" }' );
-    IsValid := IsValid or N.Check( '{ k": "value" }' );
-    IsValid := IsValid or N.Check( '{ "a": 1, "b": 2, "a": 3 }' );
+    StrL.Add('bad key: not closed 1'     +'='+ '{"k:"value"}'         );
+    StrL.Add('bad key: not closed 2'     +'='+ '{"key:"value"}'       );
+    StrL.Add('bad key: not opened'       +'='+ '{k":"value"}'         );
+    StrL.Add('bad key: duplicated'       +'='+ '{"k":1,"a":2,"a":3}'  );
     // object bad formats
-    IsValid := IsValid or N.Check( '{ "k": {{"key":"value"}} }' );
-    IsValid := IsValid or N.Check( '{ "k":  {"key":"value"]  }' );
-    // array bad format
-    IsValid := IsValid or N.Check( '{ "k": [["1","2"]]       }' );
-    IsValid := IsValid or N.Check( '{ "k":  ["key":"value"]  }' );
-    IsValid := IsValid or N.Check( '{ "k":  ["1","2"      }  }' );
+    StrL.Add('bad object: not closed'    +'='+ '{"k":"value"'         );
+    StrL.Add('bad object: bi closed 1'   +'='+ '{"k":"value"}}'       );
+    StrL.Add('bad object: bi closed 2'   +'='+ '{"k":[{"k":"v"}}]}'   );
+    StrL.Add('bad object: wrong close'   +'='+ '{"k":{"key":"value"]}');
+    // array bad formats
+    StrL.Add('bad array: not closed'     +'='+ '{"k":["1","2"}'       );
+    StrL.Add('bad array: bi closed 1'    +'='+ '{"k":["1","2"]]'      );
+    StrL.Add('bad array: wrong item'     +'='+ '{"k":["key":"value"]}');
+    StrL.Add('bad array: wrong close'    +'='+ '{"k":["1","2"}}'      );
     // json inside a json
-    // ... not permited
-    IsValid := IsValid or     N.Check( '{ "j": "{"key": "value"}"}' );
-    // ... permited (escaped)
-    IsValid := IsValid or not N.Check( '{ "j": "{\"key\": \"value\"}"}' );
-    // if any is valid, test fails
-    Result := not IsValid;
+    StrL.Add('bad value: json'           +'='+ '{"k":"{"key":"value"}"}');
+    // check
+    for i:=0 to StrL.Count-1 do
+    begin
+      sName   := Trim( StrL.Names[i]      );
+      sTest   := Trim( StrL.Values[sName] );
+      if ( N.Check(sTest) ) then
+      begin
+        Msg := Msg + #13#10 + sIndent + 'Expected to fail but pass: ' + sName;
+        anyPass := True;
+      end;
+    end;
+    // if any passed, report fail
+    Result := not anyPass;
   except
     on E: Exception do
     begin
-      Msg := Msg + #13#10 + '       Error: ' + E.Message;
+      Msg := Msg + #13#10 + sIndent + 'Error: ' + E.Message;
       Result := False;
     end;
   end;
+  StrL.Free;
   N.Free;
 end;
 
 function Test11(out Msg: string): Boolean;
 var
+  StrL: TStringList;
+  i: Integer;
+  N: TMcJsonItem;
+  anyFail: Boolean;
+  sName, sTest: string;
+begin
+  Msg := 'Test 11: valid and weird JSON';
+  StrL := TStringList.Create;
+  N := TMcJsonItem.Create;
+  anyFail := False;
+  try
+    // keys
+    StrL.Add('key: empty'          +'='+ '{"":"value"}'               );
+    StrL.Add('key: keyword'        +'='+ '{"{":"value"}'              );
+    // objects
+    StrL.Add('object: empty'       +'='+ '{}'                         );
+    // arrays
+    StrL.Add('array: empty'        +'='+ '{"k":[]}'                   );
+    StrL.Add('array: bi openned'   +'='+ '{"k":[["1","2"]]}'          );
+    // json inside a json
+    StrL.Add('value: escaped json' +'='+ '{"k":"{\"key\":\"value\"}"}');
+    // check
+    for i:=0 to StrL.Count-1 do
+    begin
+      sName   := Trim( StrL.Names[i]      );
+      sTest   := Trim( StrL.Values[sName] );
+      if ( not N.Check(sTest) ) then
+      begin
+        Msg := Msg + #13#10 + sIndent + 'Expected to pass but fail: ' + sName;
+        anyFail := True;
+      end;
+    end;
+    // if any fail, report fail
+    Result := not anyFail;
+  except
+    on E: Exception do
+    begin
+      Msg := Msg + #13#10 + sIndent + 'Error: ' + E.Message;
+      Result := False;
+    end;
+  end;
+  StrL.Free;
+  N.Free;
+end;
+
+function Test12(out Msg: string): Boolean;
+var
   N: TMcJsonItem;
 begin
-  Msg := 'Test: type transformations';
+  Msg := 'Test 11: type transformations';
   N := TMcJsonItem.Create;
   try
     Result := True;
@@ -383,19 +447,19 @@ begin
   except
     on E: Exception do
     begin
-      Msg := Msg + #13#10 + '       Error: ' + E.Message;
+      Msg := Msg + #13#10 + sIndent + 'Error: ' + E.Message;
       Result := False;
     end;
   end;
   N.Free;
 end;
 
-function Test12(out Msg: string): Boolean;
+function Test13(out Msg: string): Boolean;
 var
   N, M: TMcJsonItem;
   i, idx: Integer;
 begin
-  Msg := 'Test: Save and Load using files';
+  Msg := 'Test 12: Save and Load using files';
   N := TMcJsonItem.Create();
   M := TMcJsonItem.Create();
   try
@@ -420,7 +484,7 @@ begin
   except
     on E: Exception do
     begin
-      Msg := Msg + #13#10 + '       Error: ' + E.Message;
+      Msg := Msg + #13#10 + sIndent + 'Error: ' + E.Message;
       Result := False;
     end;
   end;
@@ -428,11 +492,11 @@ begin
   M.Free;
 end;
 
-function Test13(out Msg: string): Boolean;
+function Test14(out Msg: string): Boolean;
 var
   N, M, P: TMcJsonItem;
 begin
-  Msg := 'Test: constructors';
+  Msg := 'Test 13: constructors';
   N := nil;
   M := nil;
   P := nil;
@@ -451,7 +515,7 @@ begin
   except
     on E: Exception do
     begin
-      Msg := Msg + #13#10 + '       Error: ' + E.Message;
+      Msg := Msg + #13#10 + sIndent + 'Error: ' + E.Message;
       Result := False;
     end;
   end;
@@ -460,11 +524,11 @@ begin
   P.Free;
 end;
 
-function Test14(out Msg: string): Boolean;
+function Test15(out Msg: string): Boolean;
 var
   N, M, P, Q: TMcJsonItem;
 begin
-  Msg := 'Test: Copy, Clone, IsEqual, Remove functions';
+  Msg := 'Test 14: Copy, Clone, IsEqual, Remove functions';
   N := TMcJsonItem.Create();
   M := TMcJsonItem.Create();
   P := nil;
@@ -485,7 +549,7 @@ begin
   except
     on E: Exception do
     begin
-      Msg := Msg + #13#10 + '       Error: ' + E.Message;
+      Msg := Msg + #13#10 + sIndent + 'Error: ' + E.Message;
       Result := False;
     end;
   end;
@@ -495,13 +559,13 @@ begin
   Q.Free;
 end;
 
-function Test15(out Msg: string): Boolean;
+function Test16(out Msg: string): Boolean;
 var
   N: TMcJsonItem;
   i: Integer;
   anyPass: Boolean;
 begin
-  Msg := 'Test: exceptions';
+  Msg := 'Test 15: exceptions';
   N := TMcJsonItem.Create();
   Result  := True;
   anyPass := False;
@@ -555,7 +619,7 @@ begin
     except
       on E: Exception do
       begin
-        Msg := Msg + #13#10 + '       Error: ' + E.Message;
+        Msg := Msg + #13#10 + sIndent + 'Error: ' + E.Message;
         Result := Result and (not anyPass);
       end;
     end;
@@ -583,18 +647,18 @@ begin
         Json['array'].Add.AsInteger := i;
       // save a backup to file
       if (Json['array'].Count = 3) then
-        Json.SaveToFile('example.json');
+        Json.SaveToFile('test99.json');
       // remove an item
       Json.Delete('array');
       // oops, load the backup
       if (Json.Count = 4) then
-        Json.LoadFromFile('example.json');
+        Json.LoadFromFile('test99.json');
       // test final result
       Result := (Json.AsJSON = '{"key1":1,"key2":true,"key3":1.234,"key4":"value 1","array":[1,2,3]}');
     except
     on E: Exception do
     begin
-      Msg := Msg + #13#10 + '       Error: ' + E.Message;
+      Msg := Msg + #13#10 + sIndent + 'Error: ' + E.Message;
       Result := False;
     end;
   end;
@@ -609,6 +673,9 @@ var
 begin
   TotalPassed := 0;
   TotalFailed := 0;
+
+  // [PASS] [
+  sIndent := '       ';
 
   Check(Test01, TotalPassed, TotalFailed);
   Check(Test02, TotalPassed, TotalFailed);
@@ -625,9 +692,11 @@ begin
   Check(Test13, TotalPassed, TotalFailed);
   Check(Test14, TotalPassed, TotalFailed);
   Check(Test15, TotalPassed, TotalFailed);
+  Check(Test16, TotalPassed, TotalFailed);
   Check(Test99, TotalPassed, TotalFailed);
 
   WriteLn;
+  
   if TotalFailed > 0 then
     WriteLn(TotalFailed, ' tests FAILED')
   else
