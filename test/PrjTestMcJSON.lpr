@@ -410,7 +410,7 @@ function Test12(out Msg: string): Boolean;
 var
   N: TMcJsonItem;
 begin
-  Msg := 'Test 11: type transformations';
+  Msg := 'Test 12: type transformations';
   N := TMcJsonItem.Create;
   try
     Result := True;
@@ -463,7 +463,7 @@ var
   N, M: TMcJsonItem;
   i, idx: Integer;
 begin
-  Msg := 'Test 12: Save and Load using files';
+  Msg := 'Test 13: Save and Load using files';
   N := TMcJsonItem.Create();
   M := TMcJsonItem.Create();
   try
@@ -500,7 +500,7 @@ function Test14(out Msg: string): Boolean;
 var
   N, M, P: TMcJsonItem;
 begin
-  Msg := 'Test 13: constructors';
+  Msg := 'Test 14: constructors';
   N := nil;
   M := nil;
   P := nil;
@@ -532,7 +532,7 @@ function Test15(out Msg: string): Boolean;
 var
   N, M, P, Q: TMcJsonItem;
 begin
-  Msg := 'Test 14: Copy, Clone, IsEqual, Remove functions';
+  Msg := 'Test 15: Copy, Clone, IsEqual, Remove functions';
   N := TMcJsonItem.Create();
   M := TMcJsonItem.Create();
   P := nil;
@@ -569,7 +569,7 @@ var
   i: Integer;
   anyPass: Boolean;
 begin
-  Msg := 'Test 15: exceptions';
+  Msg := 'Test 16: exceptions';
   N := TMcJsonItem.Create();
   Result  := True;
   anyPass := False;
@@ -626,6 +626,30 @@ begin
         Msg := Msg + #13#10 + sIndent + 'Error: ' + E.Message;
         Result := Result and (not anyPass);
       end;
+    end;
+  end;
+  N.Free;
+end;
+
+function Test17(out Msg: string): Boolean;
+var
+  N, obj: TMcJsonItem;
+begin
+  Msg := 'Test 17: enumerators';
+  N := TMcJsonItem.Create;
+  obj := nil;
+  try
+    N.AsJSON := '{ "i": 123, "f": 123.456, "s": "abc", "b": True, "n": Null }';
+    // use enumerator to browse values.
+    for obj in N.AsObject do
+      obj.AsJSON;
+    // check final value
+    Result := (obj.AsString = 'null');
+  except
+    on E: Exception do
+    begin
+      Msg := Msg + #13#10 + sIndent + 'Error: ' + E.Message;
+      Result := False;
     end;
   end;
   N.Free;
@@ -697,6 +721,8 @@ begin
   Check(Test14, TotalPassed, TotalFailed);
   Check(Test15, TotalPassed, TotalFailed);
   Check(Test16, TotalPassed, TotalFailed);
+  Check(Test17, TotalPassed, TotalFailed);
+
   Check(Test99, TotalPassed, TotalFailed);
 
   WriteLn;

@@ -11,6 +11,21 @@ type
   TJItemType  = (jitValue, jitObject, jitArray, jitUnset);
   TJValueType = (jvtString, jvtNumber, jvtBoolean, jvtNull);
 
+  TMcJsonItem = class;
+
+  { TMcJsonItemEnumerator is used to enumerate 'for ... in' statements }
+  TMcJsonItemEnumerator = class
+  strict private
+    fNode: TMcJsonItem;
+    fIndex: Integer;
+  public
+    constructor Create(aNode: TMcJsonItem);
+    function GetCurrent: TMcJsonItem;
+    function MoveNext: Boolean;
+    property Current: TMcJsonItem read GetCurrent;
+  end;
+
+
   TMcJsonItem = class
   private
     fType   : TJItemType;  // item type (value/object/array)
@@ -112,6 +127,8 @@ type
 
     procedure LoadFromFile(const aFileName: string; aUTF8: Boolean = True);
     procedure SaveToFile(const aFileName: string; aHuman: Boolean = True);
+
+    function GetEnumerator: TMcJsonItemEnumerator;
 
     // helpers
     function  GetTypeStr: string;
@@ -225,7 +242,40 @@ begin
   Result := sRes;
 end;
 
+{ ---------------------------------------------------------------------------- }
+{ TMcJsonItemEnumerator }
+{ ---------------------------------------------------------------------------- }
+
+constructor TMcJsonItemEnumerator.Create(aNode: TMcJsonItem);
+begin
+  fNode  := aNode;
+  FIndex := -1;
+end;
+
+function TMcJsonItemEnumerator.GetCurrent: TMcJsonItem;
+begin
+  if fNode.fChild = nil then
+    Result := nil
+  else if fIndex < 0 then
+    Result := nil
+  else if fIndex < fNode.fChild.Count then
+    Result := TMcJsonItem(fNode.fChild[fIndex])
+  else
+    Result := nil;
+end;
+
+function TMcJsonItemEnumerator.MoveNext: Boolean;
+begin
+  Inc(fIndex);
+  if fNode.fChild = nil then
+    Result := False
+  else
+    Result := fIndex < fNode.fChild.Count;
+end;
+
+{ ---------------------------------------------------------------------------- }
 { TMcJsonItem }
+{ ---------------------------------------------------------------------------- }
 
 function TMcJsonItem.fGetCount: Integer;
 begin
@@ -695,7 +745,7 @@ begin
   // valid-JSON
   if (c = aLen) and (aCode[c] <> ']') then
     Error(SParsingError, 'bad object', IntToStr(aLen));
-  // stop at '}'
+  // stop at ']'
   Result := c;
 end;
 
@@ -741,6 +791,7 @@ var
 begin
   len  := Length(aKeyword);
   sAux := System.Copy(aCode, aPos, len);
+  // valid-JSON
   if (Lowercase(sAux) <> aKeyword) then
     Error(SParsingError, 'invalid keyword "' + sAux + '"', IntToStr(aPos));
   // stop at keyword last char
@@ -1195,6 +1246,14 @@ begin
   finally
     CloseFile(aFile);
   end;
+end;
+
+function TMcJsonItem.GetEnumerator: TMcJsonItemEnumerator;
+var
+  enum: TMcJsonItemEnumerator;
+begin
+  enum := TMcJsonItemEnumerator.Create(Self);
+  Result := enum;
 end;
 
 function TMcJsonItem.GetTypeStr: string;

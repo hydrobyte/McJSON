@@ -156,6 +156,16 @@ Answer := N.Check( '{"i":[123}' );
 // Error while parsing text: read "expected ," at pos "10"
 ```
 
+### Enumerate
+Using Delphi enumerator you can browse item's object children and values.
+```pascal
+var
+  obj: TMcJsonItem;
+begin
+  for obj in N.AsObject do
+    // use obj, e.g. obj.Key, obj.Value, obj.AsJSON
+```
+
 
 ### Array or object items
 Here is how to access all items (children) of a JSON object and change their value type and content.
