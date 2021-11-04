@@ -322,12 +322,14 @@ begin
     StrL.Add('bad key: not opened'       +'='+ '{k":"value"}'         );
     StrL.Add('bad key: duplicated'       +'='+ '{"k":1,"a":2,"a":3}'  );
     // object bad formats
-    StrL.Add('bad object: not closed'    +'='+ '{"k":"value"'         );
+    StrL.Add('bad object: not closed 1'  +'='+ '{'                    );
+    StrL.Add('bad object: not closed 2'  +'='+ '{"k":"value"'         );
     StrL.Add('bad object: bi closed 1'   +'='+ '{"k":"value"}}'       );
     StrL.Add('bad object: bi closed 2'   +'='+ '{"k":[{"k":"v"}}]}'   );
     StrL.Add('bad object: wrong close'   +'='+ '{"k":{"key":"value"]}');
     // array bad formats
-    StrL.Add('bad array: not closed'     +'='+ '{"k":["1","2"}'       );
+    StrL.Add('bad array: not closed 1'   +'='+ '["1","2"'             );
+    StrL.Add('bad array: not closed 2'   +'='+ '{"k":["1","2"}'       );
     StrL.Add('bad array: bi closed 1'    +'='+ '{"k":["1","2"]]'      );
     StrL.Add('bad array: wrong item'     +'='+ '{"k":["key":"value"]}');
     StrL.Add('bad array: wrong close'    +'='+ '{"k":["1","2"}}'      );
@@ -376,7 +378,9 @@ begin
     // objects
     StrL.Add('object: empty'       +'='+ '{}'                         );
     // arrays
+    StrL.Add('array: empty no key' +'='+ '[]'                         );
     StrL.Add('array: empty'        +'='+ '{"k":[]}'                   );
+    StrL.Add('array: no root'      +'='+ '[1,2]'                      );
     StrL.Add('array: bi openned'   +'='+ '{"k":[["1","2"]]}'          );
     // json inside a json
     StrL.Add('value: escaped json' +'='+ '{"k":"{\"key\":\"value\"}"}');

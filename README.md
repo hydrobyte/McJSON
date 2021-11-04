@@ -310,22 +310,24 @@ object; string; Key=; Value=; JSON={"foo":"bar","array":[100,20],"arrayObj":[{"k
      value; string; Key=; Value=#2 Scapes: \b\t\n\f\r\u\"\\; JSON="#2 Scapes: \b\t\n\f\r\u\"\\"
 ```
 
+### A note about empty keys
+In this version (`0.9.0`), empty keys will be parsed and checked withou errors:
+```pascal
+N.AsJSON := '{"": "value"}';
+```
+And `ToString()` will produce a valid JSON object:
+```json
+{
+  "": "value"
+}
+```
+Internally, it will use the C_EMPTY_KEY constant string as content of the fKey field.
+
 ## Known issues
 The world is not perfect and neither am I.
 Here are some known issues:
 * `McJSON` does not parse (escape) `\u` (+4 hexa chars) (e.g. `\uFFFF`) yet.
 * Trying to follow and confirm the [specification](https://www.json.org/json-en.html).
-
-### A note about empty keys
-In this version, empty keys will be parsed withou errors:
-```pascal
-N.AsJSON := '{"": "value"}';
-```
-But atention that `ToString()` will produce an invalid JSON object:
-```json
-{"value"}
-```
-This case is under analysis.
 
 ## Performance tests
 A performance test have been done with the original `myJSON`, `LkJson`, `JsonTools` and `uJSON` units.

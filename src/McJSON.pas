@@ -121,6 +121,7 @@ type
     function  GetTypeStr: string;
     function  GetValueStr: string;
     function  Qot(const aMsg: string): string;
+    function  QotKey(const aKey: string): string;
     procedure Error(const Msg: string; const S1: string = '';
                                        const S2: string = '';
                                        const S3: string = '');
@@ -142,6 +143,9 @@ type
   function GetValueTypeStr(aType: TJValueType): string;
 
 implementation
+
+const C_MCJSON_VERSION = '0.9.0';
+const C_EMPTY_KEY      = '__a3mptyStr__';
 
 resourcestring
   SItemNil           = 'Object reference is nil: %s';
@@ -653,6 +657,9 @@ begin
     first := False;
     // parsing a "key"
     c := readString(aCode, sKey, c, aLen);
+    // check empty key like {"":"value"}
+    if (sKey = '') then
+      sKey := C_EMPTY_KEY;
     // create a new item with parsed key
     // check duplicate (subject to speed up flag)
     aItem := nil;
@@ -674,7 +681,7 @@ begin
     Inc(c);
   end;
   // valid-JSON
-  if (c > aLen) and (aCode[aLen] <> '}') then
+  if (c > aLen) or (aCode[aLen] <> '}') then
     Error(SParsingError, 'bad object', IntToStr(aLen));
   // stop at '}'
   Result := c;
@@ -711,7 +718,7 @@ begin
     Inc(c);
   end;
   // valid-JSON
-  if (c = aLen) and (aCode[c] <> ']') then
+  if (c > aLen) or (aCode[c] <> ']') then
     Error(SParsingError, 'bad array', IntToStr(aLen));
   // stop at ']'
   Result := c;
@@ -924,7 +931,7 @@ begin
     jitObject:
     begin
       if (fKey <> '') then
-        aStrS.WriteString(Qot(fKey) + aSp);
+        aStrS.WriteString(QotKey(fKey) + aSp);
       aStrS.WriteString('{' + aNL);
       len := Self.Count - 1;
       // use aSp to define if aHuman is true.
@@ -943,7 +950,7 @@ begin
     jitArray:
     begin
       if (fKey <> '') then
-        aStrS.WriteString(Qot(fKey) + aSp);
+        aStrS.WriteString(QotKey(fKey) + aSp);
       aStrS.WriteString('[' + aNL);
       len := Self.Count - 1;
       // use aSp to define if aHuman is true.
@@ -962,7 +969,7 @@ begin
     jitValue:
     begin
       if (fKey <> '') then
-        aStrS.WriteString(Qot(fKey) + aSp);
+        aStrS.WriteString(QotKey(fKey) + aSp);
       if (fValType = jvtString)
         then aStrS.WriteString(Qot(fValue))
         else aStrS.WriteString(    fValue );
@@ -1157,8 +1164,8 @@ begin
   try
     aItem.fSpeedUp := aSpeedUp;
     aItem.AsJSON   := aStr;
-    Result := True;
-    //Result := (aItem.AsJSON = trimWS(aStr));
+    //Result := True;
+    Result := (aItem.AsJSON = trimWS(aStr));
   except
     Result := False;
   end;
@@ -1240,6 +1247,14 @@ end;
 function TMcJsonItem.Qot(const aMsg: string): string;
 begin
   Result := '"' + aMsg + '"';
+end;
+
+function TMcJsonItem.QotKey(const aKey: string): string;
+begin
+  Result := '';
+  if (aKey = C_EMPTY_KEY)
+    then Result := Qot('')
+    else Result := Qot(aKey);
 end;
 
 procedure TMcJsonItem.Error(const Msg: string; const S1: string;
