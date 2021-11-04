@@ -8,23 +8,10 @@ uses
 type
   EMcJsonException = class(Exception);
 
-  TJItemType  = (jitValue, jitObject, jitArray, jitUnset);
+  TJItemType  = (jitUnset, jitValue, jitObject, jitArray);
   TJValueType = (jvtString, jvtNumber, jvtBoolean, jvtNull);
 
-  TMcJsonItem = class;
-
-  { TMcJsonItemEnumerator is used to enumerate 'for ... in' statements }
-  TMcJsonItemEnumerator = class
-  strict private
-    fNode: TMcJsonItem;
-    fIndex: Integer;
-  public
-    constructor Create(aNode: TMcJsonItem);
-    function GetCurrent: TMcJsonItem;
-    function MoveNext: Boolean;
-    property Current: TMcJsonItem read GetCurrent;
-  end;
-
+  TMcJsonItemEnumerator = class;
 
   TMcJsonItem = class
   private
@@ -68,15 +55,15 @@ type
     // parse with single pass per string
     function parse(const aCode: string; aPos, aLen: Integer): Integer;
     // read methods used by parse
-    function readString(const aCode: string; out aStr:string; aPos, aLen: Integer): Integer;
-    function readChar(const aCode: string; aChar: Char; aPos, aLen: Integer): Integer;
+    function readString (const aCode: string; out aStr:string; aPos, aLen: Integer): Integer;
+    function readChar   (const aCode: string; aChar: Char; aPos, aLen: Integer): Integer;
     function readKeyword(const aCode, aKeyword: string; aPos, aLen: Integer): Integer;
-    function readValue(const aCode: string; aPos, aLen: Integer): Integer;
-    function readObject(const aCode: string; aPos, aLen: Integer): Integer;
-    function readArray(const aCode: string; aPos, aLen: Integer): Integer;
-    function readNumber(const aCode: string; aPos, aLen: Integer): Integer;
+    function readValue  (const aCode: string; aPos, aLen: Integer): Integer;
+    function readObject (const aCode: string; aPos, aLen: Integer): Integer;
+    function readArray  (const aCode: string; aPos, aLen: Integer): Integer;
+    function readNumber (const aCode: string; aPos, aLen: Integer): Integer;
     function readBoolean(const aCode: string; aPos, aLen: Integer): Integer;
-    function readNull(const aCode: string; aPos, aLen: Integer): Integer;
+    function readNull   (const aCode: string; aPos, aLen: Integer): Integer;
     // aux functions used in ToString
     function sFormat(aHuman: Boolean): string;
     function sFormatItem(aStrS: TStringStream; const aIn, aNL, aSp: string): string;
@@ -139,6 +126,18 @@ type
                                        const S3: string = '');
   end;
 
+  { TMcJsonItemEnumerator }
+  TMcJsonItemEnumerator = class
+  strict private
+    fNode: TMcJsonItem;
+    fIndex: Integer;
+  public
+    constructor Create(aNode: TMcJsonItem);
+    function GetCurrent: TMcJsonItem;
+    function MoveNext: Boolean;
+    property Current: TMcJsonItem read GetCurrent;
+  end;
+
   function GetItemTypeStr(aType: TJItemType): string;
   function GetValueTypeStr(aType: TJValueType): string;
 
@@ -149,7 +148,7 @@ resourcestring
   SItemTypeInvalid   = 'Invalid item type: expected "%s" got "%s"';
   SItemTypeConvValue = 'Can''t convert item "%s" with value "%s" to "%s"';
   SItemTypeConv      = 'Can''t convert item "%s" to "%s"';
-  SParsingError      = 'Error while parsing text: read "%s" at pos "%s"';
+  SParsingError      = 'Error while parsing text: "%s" at pos "%s"';
 
 const
   WHITESPACE: set of char = [#9, #10, #13, #32];
@@ -240,37 +239,6 @@ begin
     then SetLength(sRes, j-1);
   // result
   Result := sRes;
-end;
-
-{ ---------------------------------------------------------------------------- }
-{ TMcJsonItemEnumerator }
-{ ---------------------------------------------------------------------------- }
-
-constructor TMcJsonItemEnumerator.Create(aNode: TMcJsonItem);
-begin
-  fNode  := aNode;
-  FIndex := -1;
-end;
-
-function TMcJsonItemEnumerator.GetCurrent: TMcJsonItem;
-begin
-  if fNode.fChild = nil then
-    Result := nil
-  else if fIndex < 0 then
-    Result := nil
-  else if fIndex < fNode.fChild.Count then
-    Result := TMcJsonItem(fNode.fChild[fIndex])
-  else
-    Result := nil;
-end;
-
-function TMcJsonItemEnumerator.MoveNext: Boolean;
-begin
-  Inc(fIndex);
-  if fNode.fChild = nil then
-    Result := False
-  else
-    Result := fIndex < fNode.fChild.Count;
 end;
 
 { ---------------------------------------------------------------------------- }
@@ -744,7 +712,7 @@ begin
   end;
   // valid-JSON
   if (c = aLen) and (aCode[c] <> ']') then
-    Error(SParsingError, 'bad object', IntToStr(aLen));
+    Error(SParsingError, 'bad array', IntToStr(aLen));
   // stop at ']'
   Result := c;
 end;
@@ -779,7 +747,7 @@ end;
 function TMcJsonItem.readChar(const aCode: string; aChar: Char; aPos, aLen: Integer): Integer;
 begin
   if ( aCode[aPos] <> aChar ) then
-    Error(SParsingError, 'expected ' + aChar, IntToStr(aPos));
+    Error(SParsingError, 'expected ' + aChar + ' got ' + aCode[aPos], IntToStr(aPos));
   // stop at aChar
   Result := aPos;
 end;
@@ -793,7 +761,7 @@ begin
   sAux := System.Copy(aCode, aPos, len);
   // valid-JSON
   if (Lowercase(sAux) <> aKeyword) then
-    Error(SParsingError, 'invalid keyword "' + sAux + '"', IntToStr(aPos));
+    Error(SParsingError, 'invalid keyword ' + sAux, IntToStr(aPos));
   // stop at keyword last char
   Result := aPos + len - 1;
 end;
@@ -805,7 +773,7 @@ var
 begin
   // we got here because current symbol is '"'
   c := aPos;
-  // parse a "value"
+  // parse a "value" -> value
   c := readString(aCode, sVal, c, aLen);
   // valid-JSON
   if (c > aLen) then
@@ -813,7 +781,7 @@ begin
   // set item and value types
   Self.fSetType(jitValue);
   Self.fValType := jvtString;
-  Self.fValue   := sVal; // "value" -> value
+  Self.fValue   := sVal;
   // stop at '"'
   Result := c;
 end;
@@ -850,9 +818,9 @@ begin
       Error(SParsingError, 'bad number', IntToStr(c));
   end;
   // valid-JSON: not a number
-  if    (aCode[c] <> ','   ) and
-    not (aCode[c] in CLOSES) then
-    Error(SParsingError, 'bad number', IntToStr(c));
+  if not ((aCode[c] = ','    ) or
+          (aCode[c] in CLOSES)) then
+    Error(SParsingError, 'bad number', IntToStr(c));      
   // Result
   Self.fSetType(jitValue);
   Self.fValType := jvtNumber;
@@ -1190,6 +1158,7 @@ begin
     aItem.fSpeedUp := aSpeedUp;
     aItem.AsJSON   := aStr;
     Result := True;
+    //Result := (aItem.AsJSON = trimWS(aStr));
   except
     Result := False;
   end;
@@ -1281,6 +1250,37 @@ var
 begin
   aStr := Format(Msg, [S1, S2, S3]);
   raise EMcJsonException.Create(aStr);
+end;
+
+{ ---------------------------------------------------------------------------- }
+{ TMcJsonItemEnumerator }
+{ ---------------------------------------------------------------------------- }
+
+constructor TMcJsonItemEnumerator.Create(aNode: TMcJsonItem);
+begin
+  fNode  := aNode;
+  FIndex := -1;
+end;
+
+function TMcJsonItemEnumerator.GetCurrent: TMcJsonItem;
+begin
+  if fNode.fChild = nil then
+    Result := nil
+  else if fIndex < 0 then
+    Result := nil
+  else if fIndex < fNode.fChild.Count then
+    Result := TMcJsonItem(fNode.fChild[fIndex])
+  else
+    Result := nil;
+end;
+
+function TMcJsonItemEnumerator.MoveNext: Boolean;
+begin
+  Inc(fIndex);
+  if fNode.fChild = nil then
+    Result := False
+  else
+    Result := fIndex < fNode.fChild.Count;
 end;
 
 end.

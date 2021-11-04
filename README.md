@@ -21,7 +21,7 @@ Some points of interest:
    * C++Builder XE2 and 10.2.
  * Just one unit (`McJSON`), just one class(`TMcJsonItem`).
  * Inspired by [badunius/myJSON](https://github.com/badunius/myJSON).
- * Improved parser after applying [Tan Li Hau's](https://lihautan.com/json-parser-with-javascript/#understand-the-grammar) article.
+ * Improved parser after applying Tan Li Hau's [article](https://lihautan.com/json-parser-with-javascript/#understand-the-grammar).
  * Performance [tests](#performance-tests) using C++Builder and comparing:
    *  [myJSON](https://github.com/badunius/myJSON) 
    *  [LkJson](https://sourceforge.net/projects/lkjson/)
@@ -309,6 +309,16 @@ object; string; Key=; Value=; JSON={"foo":"bar","array":[100,20],"arrayObj":[{"k
      value; string; Key=; Value=#1 UTF8 example: motivação; JSON="#1 UTF8 example: motivação"
      value; string; Key=; Value=#2 Scapes: \b\t\n\f\r\u\"\\; JSON="#2 Scapes: \b\t\n\f\r\u\"\\"
 ```
+### A note about empty keys
+In this version, empty keys will be parsed withou errors:
+```pascal
+N.AsJSON := '{"": "value"}';
+```
+But atention that ToString() will produce an invalid JSON object:
+```json
+{"value"};
+```
+This case is under analysis.
 
 ## Known issues
 The world is not perfect and neither am I.

@@ -316,6 +316,7 @@ begin
     StrL.Add('bad value: not keyword'    +'='+ '{"k":falsi}'          );
     StrL.Add('bad value: not keyword'    +'='+ '{"k":nil  }'          );
     // key bad formats
+    StrL.Add('bad key: no key'           +'='+ '{"value"}'            );
     StrL.Add('bad key: not closed 1'     +'='+ '{"k:"value"}'         );
     StrL.Add('bad key: not closed 2'     +'='+ '{"key:"value"}'       );
     StrL.Add('bad key: not opened'       +'='+ '{k":"value"}'         );
@@ -364,7 +365,7 @@ var
   anyFail: Boolean;
   sName, sTest: string;
 begin
-  Msg := 'Test 11: valid and weird JSON';
+  Msg := 'Test 11: valid and unusual JSON';
   StrL := TStringList.Create;
   N := TMcJsonItem.Create;
   anyFail := False;

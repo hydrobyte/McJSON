@@ -89,6 +89,7 @@ modules/
 
 # Lazarus local files (user-specific info)
 *.lps
+*.lpi
 
 # Lazarus backups and unit output folders.
 # These can be changed by user in Lazarus/project options.
