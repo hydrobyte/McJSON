@@ -310,7 +310,10 @@ begin
     StrL.Add('bad value: not number 3'   +'='+ '{"k":1234E}'          );
     StrL.Add('bad value: not number 4'   +'='+ '{"k":1234E+-1}'       );
     StrL.Add('bad value: not number 5'   +'='+ '{"k":1234E+a}'        );
+    StrL.Add('bad value: leading 0s 1'   +'='+ '{"k":01234}'          );
+    StrL.Add('bad value: leading 0s 2'   +'='+ '{"k":00004}'          );
     StrL.Add('bad value: invalid'        +'='+ '{"k":"v"a}'           );
+    StrL.Add('bad value: line break'     +'='+ '{"k":"v'+#13+'"}'     );
     // values not recognized
     StrL.Add('bad value: not keyword'    +'='+ '{"k":truee}'          );
     StrL.Add('bad value: not keyword'    +'='+ '{"k":falsi}'          );
@@ -369,7 +372,7 @@ var
   anyFail: Boolean;
   sName, sTest: string;
 begin
-  Msg := 'Test 11: valid and unusual JSON';
+  Msg := 'Test 11: valid or unusual JSON';
   StrL := TStringList.Create;
   N := TMcJsonItem.Create;
   anyFail := False;
@@ -377,6 +380,8 @@ begin
     // keys
     StrL.Add('key: empty'          +'='+ '{"":"value"}'               );
     StrL.Add('key: keyword'        +'='+ '{"{":"value"}'              );
+    // values
+    StrL.Add('value: leading zero' +'='+ '{"k": 0.1234}'              );
     // objects
     StrL.Add('object: empty'       +'='+ '{}'                         );
     // arrays
@@ -637,18 +642,18 @@ end;
 
 function Test17(out Msg: string): Boolean;
 var
-  N, obj: TMcJsonItem;
+  N, item: TMcJsonItem;
 begin
   Msg := 'Test 17: enumerators';
-  N := TMcJsonItem.Create;
-  obj := nil;
+  N    := TMcJsonItem.Create;
+  item := nil;
   try
-    N.AsJSON := '{ "i": 123, "f": 123.456, "s": "abc", "b": True, "n": Null }';
+    N.AsJSON := '{"o": {"k1":"v1", "k2":"v2"}}';
     // use enumerator to browse values.
-    for obj in N.AsObject do
-      obj.AsJSON;
+    for item in N['o'] do
+      item.AsJSON;
     // check final value
-    Result := (obj.AsString = 'null');
+    Result := (item.AsString = 'v2');
   except
     on E: Exception do
     begin

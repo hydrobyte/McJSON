@@ -152,20 +152,9 @@ end;
 If you want to check if a JSON string is valid:
 ```pascal
 Answer := N.Check( '{"i":[123}' ); 
-// Answer will be false due to raise exception:
-// Error while parsing text: read "expected ," at pos "10"
+// Answer will be false due to exception:
+// Error while parsing text: "expected , got }" at pos "10"
 ```
-
-### Enumerate
-Using Delphi enumerator you can browse item's object children and values.
-```pascal
-var
-  obj: TMcJsonItem;
-begin
-  for obj in N.AsObject do
-    // use obj, e.g. obj.Key, obj.Value, obj.AsJSON
-```
-
 
 ### Array or object items
 Here is how to access all items (children) of a JSON object and change their value type and content.
@@ -185,6 +174,18 @@ Results in:
 }
 ```
 
+### Enumerate
+Using Delphi enumerator you can browse item's object children and values.
+```pascal
+var
+  N, item: TMcJsonItem;
+begin
+  N := TMcJsonItem.Create;
+  N.AsJSON := '{"o": {"k1":"v1", "k2":"v2"}}';
+  for item in N['o'] do
+    // use item here, e.g. item.Key, item.Value, item.AsString
+```
+
 ### Object and array value setters
 Change all values of an object with multiple items.
 Not so common out there.
@@ -199,6 +200,17 @@ Results in:
       "k1": "str",
       "k2": "str"
    }
+}
+```
+And if it is necessary to change the type of `o`:
+```pascal
+N['o'].ItemType := jitValue;
+N['o'].AsString := 'str';
+```
+Results in:
+```json
+{
+  "o": "str"
 }
 ```
 
@@ -311,7 +323,7 @@ object; string; Key=; Value=; JSON={"foo":"bar","array":[100,20],"arrayObj":[{"k
 ```
 
 ### A note about empty keys
-In this version (`0.9.0`), empty keys will be parsed and checked withou errors:
+Since version `0.9.0`, empty keys will be parsed and checked withou errors:
 ```pascal
 N.AsJSON := '{"": "value"}';
 ```
@@ -323,11 +335,21 @@ And `ToString()` will produce a valid JSON object:
 ```
 Internally, it will use the C_EMPTY_KEY constant string as content of the fKey field.
 
+### A note about line breaks
+Since version `0.9.2`, strings with not escaped line breakes will be parsed with errors:
+```pascal
+N.AsJSON := '{"key": "value' + #13 + '"}';
+```
+Will raise exception:
+```
+Error while parsing text: "line break" at pos "14"
+```
+
 ## Known issues
 The world is not perfect and neither am I.
 Here are some known issues:
 * `McJSON` does not parse (escape) `\u` (+4 hexa chars) (e.g. `\uFFFF`) yet.
-* `McJSON` does not get line breaks inside strings as errors.
+* Exceptions with `at pos "x"` might not reflect the original position in JSON string due to `trimWS()`.
 * Trying to follow and confirm the [specification](https://www.json.org/json-en.html) using [JSONLint](https://jsonlint.com/).
 
 ## Performance tests

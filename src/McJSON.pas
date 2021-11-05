@@ -144,7 +144,7 @@ type
 
 implementation
 
-const C_MCJSON_VERSION = '0.9.1';
+const C_MCJSON_VERSION = '0.9.2';
 const C_EMPTY_KEY      = '__a3mptyStr__';
 
 resourcestring
@@ -155,7 +155,8 @@ resourcestring
   SParsingError      = 'Error while parsing text: "%s" at pos "%s"';
 
 const
-  WHITESPACE: set of char = [#9, #10, #13, #32];
+  WHITESPACE: set of char = [#9, #10, #13, #32]; // tab, \r, \n, space
+  LINEBREAK:  set of char = [#10, #13];
   ESCAPES:    set of char = ['b', 't', 'n', 'f', 'r', 'u', '"', '\', '/'];
   DIGITS:     set of char = ['0'..'9'];
   SIGNS:      set of char = ['+', '-'];
@@ -281,7 +282,7 @@ begin
   // find index of item with aKey
   idx := Self.IndexOf(aKey);
   if (idx >= 0)
-    then Result := TMcJsonItem(fChild.Items[idx])
+    then Result := TMcJsonItem(fChild[idx])
     else Error(SItemNil, 'get item by key ' + Qot(aKey));
 end;
 
@@ -299,7 +300,7 @@ begin
     Error(SItemNil, 'get item by index ' + IntToStr(aIdx));
   // object cannot return an element with an index higher than the maximum
   if (aIdx < fChild.Count)
-    then Result := TMcJsonItem(fChild.Items[aIdx])
+    then Result := TMcJsonItem(fChild[aIdx])
     else Error(SItemNil, 'get item by index ' + IntToStr(aIdx));
 end;
 
@@ -457,13 +458,13 @@ begin
   else if (aType = jitObject) and (fType = jitArray) then
   begin
     for i := 0 to (fChild.Count - 1) do
-      TMcJsonItem(fChild.Items[i]).fKey := IntToStr(i);
+      TMcJsonItem(fChild[i]).fKey := IntToStr(i);
   end
   // if an object is converted into an array, then remove the keys from its descendants
   else if (aType = jitArray) and (fType = jitObject) then
   begin
     for i := 0 to (fChild.Count - 1) do
-      TMcJsonItem(fChild.Items[i]).fKey := '';
+      TMcJsonItem(fChild[i]).fKey := '';
   end;
   // return aked type
   fType := aType;
@@ -741,9 +742,12 @@ begin
     begin
       // do escapes
       Inc(c, escapeChar(aCode, c, aLen, unk));
+      // Valid-JSON: break lines
+      if (aCode[c] in LINEBREAK) then
+        Error(SParsingError, 'line break', IntToStr(c));
       // Valid-JSON: unknown escape
       if (unk) then
-        Error(SParsingError, 'unknown escape', IntToStr(aPos));
+        Error(SParsingError, 'unknown escape', IntToStr(c));
     end;
     // copy between '"'
     if (aCode[aPos] = '"') and
@@ -807,7 +811,7 @@ begin
   // 1. sign (optional)
   if aCode[c] in SIGNS
     then Inc(c);
-  // 2. some digits
+  // 2. some digits but not leading zeros
   while (aCode[c] in DIGITS) do
     Inc(c);
   // 3. decimal dot (optional)
@@ -827,12 +831,16 @@ begin
       Inc(c);
     // valid-JSON: bad scientific number
     if (ePos+1 = c) then
-      Error(SParsingError, 'bad number', IntToStr(c));
+      Error(SParsingError, 'bad scientific number', IntToStr(c));
   end;
   // valid-JSON: not a number
   if not ((aCode[c] = ','    ) or
           (aCode[c] in CLOSES)) then
-    Error(SParsingError, 'bad number', IntToStr(c));      
+    Error(SParsingError, 'not a number', IntToStr(c));
+  // valid-JSON: leading zero
+  if (aCode[aPos]   =  '0') and (aPos < aLen) and (c-aPos > 1) and
+     (aCode[aPos+1] <> '.') then
+    Error(SParsingError, 'bad number, leading zero', IntToStr(c));
   // Result
   Self.fSetType(jitValue);
   Self.fValType := jvtNumber;
@@ -1027,7 +1035,7 @@ begin
   // recursively removes all childs
   for i := 0 to (fChild.Count - 1) do
   begin
-    TMcJsonItem(fChild.Items[i]).Free;
+    TMcJsonItem(fChild[i]).Free;
   end;
   fChild.Clear;
 end;
@@ -1043,7 +1051,7 @@ begin
   // looking for an element
   for i := 0 to (fChild.Count - 1) do
   begin
-    if (TMcJsonItem(fChild.Items[i]).fKey = aKey) then
+    if (TMcJsonItem(fChild[i]).fKey = aKey) then
     begin
       idx := i;
       Break;
@@ -1121,7 +1129,7 @@ begin
   else
   begin
     // item to delete
-    aItemDel := TMcJsonItem(fChild.Items[aIdx]);
+    aItemDel := TMcJsonItem(fChild[aIdx]);
     // delete position and free memory.
     if (aItemDel <> nil) then
     begin
@@ -1189,43 +1197,38 @@ end;
 
 procedure TMcJsonItem.LoadFromFile(const aFileName: string; aUTF8: Boolean);
 var
-  aFile: Text;
-  code, line: string;
+  fileStream: TFileStream;
+  code: AnsiString;
 begin
+  fileStream := nil;
   try
+    fileStream := TFileStream.Create(aFileName, fmOpenRead or fmShareDenyWrite);
     Clear;
-    AssignFile(aFile, aFileName);
-    {$I-}
-    Reset(aFile);
-    if (IOResult <> 0) then
-      raise EMcJsonException.CreateFmt('JSON: Failed to load %s', [aFileName]);
-    {$I+}
-    while (not EOF(aFile)) do
+    if (fileStream.Size > 0) then
     begin
-      Readln(aFile, line);
-      line := Trim(line);
-      code := code + line;
+      SetLength(code, fileStream.Size);
+      fileStream.Read(code[1], fileStream.Size);
     end;
     if aUTF8
       then Self.AsJSON := UTF8Decode(code)
       else Self.AsJSON := code;
   finally
-    CloseFile(aFile);
+    fileStream.Free;
   end;
 end;
 
 procedure TMcJsonItem.SaveToFile(const aFileName: string; aHuman: Boolean);
 var
-  aFile: TextFile;
+  fileStream: TFileStream;
+  code: AnsiString;
 begin
+  fileStream := nil;
   try
-    AssignFile(aFile, aFileName);
-    Rewrite(aFile);
-    Write(aFile, ToString(aHuman));
-    if (IOResult <> 0) then
-      raise EMcJsonException.CreateFmt('JSON: Failed to save %s', [aFileName]);
+    fileStream := TFileStream.Create(aFileName, fmCreate or fmShareDenyWrite);
+    code := ToString(aHuman);
+    fileStream.Write(code[1], Length(code));
   finally
-    CloseFile(aFile);
+    fileStream.Free;
   end;
 end;
 
