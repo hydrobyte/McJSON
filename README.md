@@ -173,7 +173,7 @@ Here is how to access all items (children) of a JSON object and change their val
 N.AsJSON := '{"o": {"k1":"v1", "k2":"v2"}}';
 // type and value: from string to integer
 for i := 1 to N['o'].Count do  
-  N['o'].AsInteger := i;   
+  N['o'].Values[i].AsInteger := i;   
 ```
 Results in:
 ```json
@@ -327,7 +327,8 @@ Internally, it will use the C_EMPTY_KEY constant string as content of the fKey f
 The world is not perfect and neither am I.
 Here are some known issues:
 * `McJSON` does not parse (escape) `\u` (+4 hexa chars) (e.g. `\uFFFF`) yet.
-* Trying to follow and confirm the [specification](https://www.json.org/json-en.html).
+* `McJSON` does not get line breaks inside strings as errors.
+* Trying to follow and confirm the [specification](https://www.json.org/json-en.html) using [JSONLint](https://jsonlint.com/).
 
 ## Performance tests
 A performance test have been done with the original `myJSON`, `LkJson`, `JsonTools` and `uJSON` units.

@@ -144,7 +144,7 @@ type
 
 implementation
 
-const C_MCJSON_VERSION = '0.9.0';
+const C_MCJSON_VERSION = '0.9.1';
 const C_EMPTY_KEY      = '__a3mptyStr__';
 
 resourcestring
@@ -156,7 +156,7 @@ resourcestring
 
 const
   WHITESPACE: set of char = [#9, #10, #13, #32];
-  ESCAPES:    set of char = ['b', 't', 'n', 'f', 'r', 'u', '"', '\'];
+  ESCAPES:    set of char = ['b', 't', 'n', 'f', 'r', 'u', '"', '\', '/'];
   DIGITS:     set of char = ['0'..'9'];
   SIGNS:      set of char = ['+', '-'];
   OPENS:      set of char = ['{', '['];
@@ -185,21 +185,22 @@ begin
   end;
 end;
 
-function escapeChar(const aStr: string; aPos: Integer): Integer;
+function escapeChar(const aStr: string; aPos, aLen: Integer; out aUnk: Boolean): Integer;
 var
-  c: Integer;
+  n: Integer;
 begin
-  case aStr[aPos] of
-    '\':
-    begin
-      if (aStr[aPos+1] in ESCAPES)
-        then c := 2
-        else c := 1;
-    end;
-    else
-      c := 1;
+  aUnk := False;
+  n    := 1;
+  if (aStr[aPos] = '\') then
+  begin
+    // check next char is escapable
+    if (aPos < aLen) and
+       (aStr[aPos+1] in ESCAPES)
+      then n    := 2
+      else aUnk := True;
   end;
-  Result := c;
+  // return the gap escaped
+  Result := n;
 end;
 
 // removes all the whitespaces from the begining of the line
@@ -207,11 +208,10 @@ function trimWS(const aStr: string): string;
 var
   i, j, k, n, len: Integer;
   sRes: string;
-  opn : Boolean;
+  opn, unk: Boolean;
 begin
   i := 1;
   j := 1;
-  n := 1;
   len := Length(aStr);
   SetLength(sRes, len);
   opn := false;
@@ -219,8 +219,7 @@ begin
   while ( i <= len ) do
   begin
     // check escapes
-    if (i < len) then
-      n := escapeChar(aStr, i);
+    n := escapeChar(aStr, i, len, unk);
     // control '"' for keys and string values.
     // if not escaped, toggle opn status
     if (n = 1) and (aStr[i] = '"') then
@@ -681,8 +680,10 @@ begin
     Inc(c);
   end;
   // valid-JSON
-  if (c > aLen) or (aCode[aLen] <> '}') then
-    Error(SParsingError, 'bad object', IntToStr(aLen));
+  if (c > aLen) then
+    Error(SParsingError, 'bad object', IntToStr(aLen))
+  else if (aCode[c] <> '}') then
+    Error(SParsingError, 'bad object', IntToStr(c)   );
   // stop at '}'
   Result := c;
 end;
@@ -718,8 +719,10 @@ begin
     Inc(c);
   end;
   // valid-JSON
-  if (c > aLen) or (aCode[c] <> ']') then
-    Error(SParsingError, 'bad array', IntToStr(aLen));
+  if (c > aLen) then
+    Error(SParsingError, 'bad object', IntToStr(aLen))
+  else if (aCode[c] <> ']') then
+    Error(SParsingError, 'bad array', IntToStr(c)   );
   // stop at ']'
   Result := c;
 end;
@@ -727,6 +730,7 @@ end;
 function TMcJsonItem.readString(const aCode: string; out aStr:string; aPos, aLen: Integer): Integer;
 var
   c: Integer;
+  unk: Boolean;
 begin
   aStr := '';
   c    := aPos;
@@ -736,9 +740,10 @@ begin
     while (aCode[c] <> '"') and (c <= aLen) do
     begin
       // do escapes
-      if (c < aLen)
-        then Inc(c, escapeChar(aCode, c))
-        else Inc(c);
+      Inc(c, escapeChar(aCode, c, aLen, unk));
+      // Valid-JSON: unknown escape
+      if (unk) then
+        Error(SParsingError, 'unknown escape', IntToStr(aPos));
     end;
     // copy between '"'
     if (aCode[aPos] = '"') and

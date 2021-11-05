@@ -277,8 +277,8 @@ begin
   Msg := 'Test 09: escapes';
   N := TMcJsonItem.Create;
   try
-    N.AsJSON := '{ "k": "\b\t\n\f\r\u\"\\" }';
-    Result   := (N['k'].AsString = '\b\t\n\f\r\u\"\\');
+    N.AsJSON := '{ "k": "\b\t\n\f\r\u \" \\ \/"}';
+    Result   := (N['k'].AsString = '\b\t\n\f\r\u \" \\ \/');
   except
     on E: Exception do
     begin
@@ -335,6 +335,8 @@ begin
     StrL.Add('bad array: wrong close'    +'='+ '{"k":["1","2"}}'      );
     // json inside a json
     StrL.Add('bad value: json'           +'='+ '{"k":"{"key":"value"}"}');
+    // unknown escape
+    StrL.Add('bad value: unknown escape' +'='+ '{"k":"aa \x aa"}');
     // check
     for i:=0 to StrL.Count-1 do
     begin
@@ -616,7 +618,7 @@ begin
         N.AsJSON := '{"k":"v", "k":"v"}';
         anyPass := True;
       end
-      // Exception Error while parsing text: read "%s" at pos "%s"
+      // Exception Error while parsing text: "%s" at pos "%s"
       else if (i = 7) then
       begin
         N.AsJSON := '{"n"[:null}';
