@@ -138,7 +138,7 @@ bool Test99(AnsiString& Msg)
 Please considere read Unit Tests in `test` folder for a complete list of `McJSON` use cases.
 
 ### Parse a JSON string
-Just use the AsJSON property
+Just use the `AsJSON` property
 ```pascal
 var
   N: TMcJsonItem;
@@ -234,6 +234,44 @@ Results in:
       "b"
    ]
 }
+```
+
+### Insert items
+Insert some items using keys and position.
+```pascal
+P.Insert('c', 0).AsInteger := 3;
+P.Insert('b', 0).AsInteger := 2;
+P.Insert('a', 0).AsInteger := 1;
+```
+Results in:
+```json
+{
+  "a": 1,
+  "b": 2,
+  "c": 3
+}
+```
+Also, it is possible to insert objects in arrays.
+```pascal
+Q.AsJSON := '{"x":0}';
+P.ItemType := jitArray;
+P.Insert(Q, 1);
+```
+Results in:
+```json
+[
+  1, 
+  {
+    "x": 0
+  }, 
+  2, 
+  3
+]
+```
+*Important*: since version 0.9.3, `Add()` and  `Insert()` will clone arguments of type `TMcJsonItem`. So, we have to free memory for `Q` too:
+```pascal
+P.Free;
+Q.Free;
 ```
 
 ### Inspect the content of an object

@@ -129,7 +129,7 @@ function Test05(out Msg: string): Boolean;
 var
   N, M, P, Q: TMcJsonItem;
 begin
-  Msg := 'Test 05: Add, Remove functions';
+  Msg := 'Test 05: Add, Insert, Delete functions';
   N := TMcJsonItem.Create;
   M := TMcJsonItem.Create;
   P := TMcJsonItem.Create;
@@ -156,26 +156,43 @@ begin
     P['a'].Add.AsInteger := 2;
     P['a'].Add.AsInteger := 3;
     Result := Result and (P.AsJSON = '{"a":[1,2,3]}');
+    // add item
+    Q.AsJSON := '{"x":0}';
+    P['a'].Add(Q);
+    Result := Result and (P.AsJSON = '{"a":[1,2,3,{"x":0}]}');
     // add obj values into array
     P.Clear;
+    Q.Clear;
     P.Add('a' ).ItemType  := jitArray;
     Q.Add('k1').AsInteger := 1;
     P['a'].Add.AsObject := Q;
     P['a'].Add.AsObject := Q;
     Result := Result and (P.AsJSON = '{"a":[{"k1":1},{"k1":1}]}')
                      and (P['a'].Count = 2);
-    // remove item by index
+    // delete item by index
     P['a'].Delete(1);
     Result := Result and (P.AsJSON = '{"a":[{"k1":1}]}')
                      and (P['a'].Count = 1);
     // remove item by key
-    P.Delete('a');
+    P.delete('a');
     Result := Result and (P.AsJSON = '{}')
                      and (P.Count  = 0   );
     // remove empty item
-    P.Delete(0);
+    P.delete(0);
     Result := Result and (P.AsJSON = '{}')
                      and (P.Count  = 0   );
+    // insert item by key
+    P.Insert('c', 0).AsInteger := 3;
+    P.Insert('b', 0).AsInteger := 2;
+    P.Insert('a', 0).AsInteger := 1;
+    Result := Result and (P.AsJSON = '{"a":1,"b":2,"c":3}')
+                     and (P.Count  = 3 );
+    // insert item
+    Q.AsJSON := '{"x":0}';
+    P.ItemType := jitArray;
+    P.Insert(Q, 1);
+    Result := Result and (P.AsJSON = '[1,{"x":0},2,3]')
+                     and (P.Count  = 4 );
   except
     on E: Exception do
     begin
@@ -184,8 +201,9 @@ begin
     end;
   end;
   N.Free;
-  //M.Free // no! free inside N
+  M.Free; // yes! Add cloned M inside N
   P.Free;
+  Q.Free  // yes! Add/Insert cloned Q inside P.
 end;
 
 function Test06(out Msg: string): Boolean;
