@@ -26,33 +26,33 @@ type
     function fGetCount: Integer;
     function fGetKey(aIdx: Integer): string;
     function fGetType: TJItemType;
-    function fGetItemByKey(aKey: string): TMcJsonItem;
+    function fGetItemByKey(const aKey: string): TMcJsonItem;
     function fGetItemByIdx(aIdx: Integer): TMcJsonItem;
     function fHasChild: Boolean;
     function fIsNull  : Boolean;
-
-    function fGetAsJSON   : string;
+    // AsSomething getters
+    function fGetAsJSON   : string     ;
     function fGetAsObject : TMcJsonItem;
     function fGetAsArray  : TMcJsonItem;
-    function fGetAsInteger: Integer;
-    function fGetAsDouble : Double;
-    function fGetAsString : string;
-    function fGetAsBoolean: Boolean;
-    function fGetAsNull   : string;
+    function fGetAsInteger: Integer    ;
+    function fGetAsDouble : Double     ;
+    function fGetAsString : string     ;
+    function fGetAsBoolean: Boolean    ;
+    function fGetAsNull   : string     ;
 
     // property setters
     procedure fSetType(aType: TJItemType);
+    // AsSomething setters.
+    procedure fSetAsJSON   (aValue: string     );
+    procedure fSetAsObject (aValue: TMcJsonItem);
+    procedure fSetAsArray  (aValue: TMcJsonItem);
+    procedure fSetAsInteger(aValue: Integer    );
+    procedure fSetAsDouble (aValue: Double     );
+    procedure fSetAsString (aValue: string     );
+    procedure fSetAsBoolean(aValue: Boolean    );
+    procedure fSetAsNull   (aValue: string     );
 
-    procedure fSetAsJSON(aStr: string);
-    procedure fSetAsObject(aValue: TMcJsonItem);
-    procedure fSetAsArray(aValue: TMcJsonItem);
-    procedure fSetAsInteger(aValue: Integer);
-    procedure fSetAsDouble(aValue: Double);
-    procedure fSetAsString(aValue: string);
-    procedure fSetAsBoolean(aValue: Boolean);
-    procedure fSetAsNull(aValue: string);
-
-    // single-pass parser
+    // string single-pass parser
     function parse(const aCode: string; aPos, aLen: Integer): Integer;
     // read methods used by parse
     function readString (const aCode: string; out aStr:string; aPos, aLen: Integer): Integer;
@@ -64,6 +64,7 @@ type
     function readNumber (const aCode: string; aPos, aLen: Integer): Integer;
     function readBoolean(const aCode: string; aPos, aLen: Integer): Integer;
     function readNull   (const aCode: string; aPos, aLen: Integer): Integer;
+
     // aux functions used in ToString
     function sFormat(aHuman: Boolean): string;
     function sFormatItem(aStrS: TStringStream; const aIn, aNL, aSp: string): string;
@@ -75,14 +76,15 @@ type
     property Value   : string     read fValue;
     property ItemType: TJItemType read fGetType write fSetType;
 
-    property Keys  [aIdx: Integer]: string      read fGetKey;
-    property Values[aIdx: Integer]: TMcJsonItem read fGetItemByIdx;
-    property Items [aKey: string ]: TMcJsonItem read fGetItemByKey; default;
+    property Keys  [aIdx      : Integer]: string      read fGetKey;
+    property Values[aIdx      : Integer]: TMcJsonItem read fGetItemByIdx;
+    property Items [const aKey: string ]: TMcJsonItem read fGetItemByKey; default;
 
     property HasChild: Boolean read fHasChild;
     property IsNull  : Boolean read fIsNull;
     property SpeedUp : Boolean read fSpeedUp write fSpeedUp;
 
+    // AsSomething properties
     property AsJSON   : string      read fGetAsJSON    write fSetAsJSON   ;
     property AsObject : TMcJsonItem read fGetAsObject  write fSetAsObject ;
     property AsArray  : TMcJsonItem read fGetAsArray   write fSetAsArray  ;
@@ -100,6 +102,8 @@ type
     procedure Clear;
     function IndexOf(const aKey: string): Integer; overload;
     function Add(const aKey: string = ''): TMcJsonItem; overload;
+    function Add(const aKey: string; aItemType: TJItemType): TMcJsonItem; overload;
+    function Add(aItemType: TJItemType): TMcJsonItem; overload;
     function Add(const aItem: TMcJsonItem): TMcJsonItem; overload;
     function Copy(const aItem: TMcJsonItem): TMcJsonItem; overload;
     function Clone: TMcJsonItem; overload;
@@ -113,6 +117,7 @@ type
 
     function ToString: string; overload;
     function ToString(aHuman: Boolean = False): string; overload;
+    function Minify(const aCode: string): string;
 
     procedure LoadFromFile(const aFileName: string; aUTF8: Boolean = True);
     procedure SaveToFile(const aFileName: string; aHuman: Boolean = True);
@@ -146,7 +151,7 @@ type
 
 implementation
 
-const C_MCJSON_VERSION = '0.9.3';
+const C_MCJSON_VERSION = '0.9.4';
 const C_EMPTY_KEY      = '__a3mptyStr__';
 
 resourcestring
@@ -263,6 +268,7 @@ function TMcJsonItem.fGetKey(aIdx: Integer): string;
 var
   aItem: TMcJsonItem;
 begin
+  if (Self = nil) then Error(SItemNil, 'get key');
   // return the key of the idx-th child
   Result := '';
   aItem := fGetItemByIdx(aIdx);
@@ -276,7 +282,7 @@ begin
   Result := fType;
 end;
 
-function TMcJsonItem.fGetItemByKey(aKey: string): TMcJsonItem;
+function TMcJsonItem.fGetItemByKey(const aKey: string): TMcJsonItem;
 var
   idx: Integer;
 begin
@@ -286,8 +292,7 @@ begin
   // find index of item with aKey
   idx := Self.IndexOf(aKey);
   if (idx >= 0)
-    then Result := TMcJsonItem(fChild[idx])
-    else Error(SItemNil, 'get item by key ' + Qot(aKey));
+    then Result := TMcJsonItem(fChild[idx]);
 end;
 
 function TMcJsonItem.fGetItemByIdx(aIdx: Integer): TMcJsonItem;
@@ -435,7 +440,7 @@ begin
   if      (Self = nil       ) then Error(SItemNil, 'get as null')
   else if (fType <> jitValue) then Error(SItemTypeInvalid, 'value', GetTypeStr);
   // return fValue that is string already
-  // no need to convert (null does not convet to nothing, not presume zero)
+  // no need to convert (null does not convet to anything, not presume zero)
   Result := fValue;
 end;
 
@@ -472,15 +477,15 @@ begin
   fType := aType;
 end;
 
-procedure TMcJsonItem.fSetAsJSON(aStr: string);
+procedure TMcJsonItem.fSetAsJSON(aValue: string);
 var
   c, len: Integer;
 begin
   if (Self = nil) then Error(SItemNil, 'set as JSON');
   Clear;
-  aStr := trimWS(aStr);
-  len  := Length(aStr);
-  c := Self.parse(aStr, 1, len);
+  aValue := trimWS(aValue);
+  len := Length(aValue);
+  c   := Self.parse(aValue, 1, len);
   // valid-JSON
   if (c < len) then
     Error(SParsingError, 'bad json', IntToStr(len));
@@ -1091,6 +1096,26 @@ begin
   Result := aItem;
 end;
 
+function TMcJsonItem.Add(const aKey: string; aItemType: TJItemType): TMcJsonItem;
+var
+  aItem: TMcJsonItem;
+begin
+  aItem := Self.Add(aKey);
+  aItem.ItemType := aItemType;
+  // result aItem to permit chain
+  Result := aItem;
+end;
+
+function TMcJsonItem.Add(aItemType: TJItemType): TMcJsonItem;
+var
+  aItem: TMcJsonItem;
+begin
+  aItem := Self.Add();
+  aItem.ItemType := aItemType;
+  // result aItem to permit chain
+  Result := aItem;
+end;
+
 function TMcJsonItem.Add(const aItem: TMcJsonItem): TMcJsonItem;
 var
   aNewItem: TMcJsonItem;
@@ -1247,6 +1272,11 @@ end;
 function TMcJsonItem.ToString(aHuman: Boolean): string;
 begin
   Result := sFormat(aHuman);
+end;
+
+function TMcJsonItem.Minify(const aCode: string): string;
+begin
+  Result := trimWS(aCode);
 end;
 
 procedure TMcJsonItem.LoadFromFile(const aFileName: string; aUTF8: Boolean);

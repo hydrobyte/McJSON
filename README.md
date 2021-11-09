@@ -50,7 +50,7 @@ begin
       Json.Add('key3').AsNumber  := 1.234;
       Json.Add('key4').AsString  := 'value 1';
       // add an array
-      Json.Add('array').ItemType := jitArray;
+      Json.Add('array', jitArray);
       for i := 1 to 3 do
         Json['array'].Add.AsInteger := i;
       // save a backup to file
@@ -106,7 +106,7 @@ bool Test99(AnsiString& Msg)
       Json->Add("key3")->AsNumber  = 1.234;
       Json->Add("key4")->AsString  = "value 1";
       // add an array
-      Json->Add("array")->ItemType = jitArray;
+      Json->Add("array", jitArray);
       for (int i = 1; i <= 3 ; i++)
         Json->Items["array"]->Add()->AsInteger = i;
       // save a backup to file

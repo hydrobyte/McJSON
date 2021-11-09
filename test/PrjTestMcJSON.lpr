@@ -154,7 +154,7 @@ begin
     N.Add('k1').Add('k2').Add('k3').AsString := 'v3';
     Result := Result and (N.AsJSON = '{"k1":{"k2":{"k3":"v3"}}}');
     // add int values into array
-    P.Add('a').ItemType := jitArray;
+    P.Add('a', jitArray);
     P['a'].Add.AsInteger := 1;
     P['a'].Add.AsInteger := 2;
     P['a'].Add.AsInteger := 3;
@@ -166,7 +166,7 @@ begin
     // add obj values into array
     P.Clear;
     Q.Clear;
-    P.Add('a' ).ItemType  := jitArray;
+    P.Add('a', jitArray);
     Q.Add('k1').AsInteger := 1;
     P['a'].Add.AsObject := Q;
     P['a'].Add.AsObject := Q;
@@ -206,7 +206,7 @@ begin
   N.Free;
   M.Free; // yes! Add cloned M inside N
   P.Free;
-  Q.Free  // yes! Add/Insert cloned Q inside P.
+  Q.Free; // yes! Add/Insert cloned Q inside P.
 end;
 
 function Test06(out Msg: string): Boolean;
@@ -685,6 +685,38 @@ begin
   N.Free;
 end;
 
+function Test18(out Msg: string): Boolean;
+var
+  Obj, ChildObj: TMcJsonItem;
+begin
+  Msg := 'Test 18: example like JsonDataObjects';
+  Obj := TMcJsonItem.Create;
+  try
+    // access (no automatic creation as in JDO)
+    Obj.Add('foo').AsString := 'bar';
+    Obj.Add('bar').AsString := 'foo';
+    // array creation, Obj is the owner of 'array'
+    Obj.Add('array', jitArray);
+    Obj['array'].Add.AsInteger := 10;
+    Obj['array'].Add.AsInteger := 20;
+    // object creation, 'array' is the owner of ChildObj
+    ChildObj := Obj['array'].Add(jitObject);
+    ChildObj.Add('value').AsNumber := 12.3;
+    // array creation, ChildObj is the owner of 'subarray'
+    ChildObj.Add('subarray', jitArray);
+    ChildObj['subarray'].Add.AsInteger := 100;
+    ChildObj['subarray'].Add.AsInteger := 200;
+    Result := (Obj.AsJSON = '{"foo":"bar","bar":"foo","array":[10,20,{"value":12.3,"subarray":[100,200]}]}');
+  except
+    on E: Exception do
+    begin
+      Msg := Msg + #13#10 + sIndent + 'Error: ' + E.Message;
+      Result := False;
+    end;
+  end;
+  Obj.Free;
+end;
+
 function Test99(out Msg: string): Boolean;
 var
   Json: TMcJsonItem;
@@ -700,7 +732,7 @@ begin
       Json.Add('key3').AsNumber  := 1.234;
       Json.Add('key4').AsString  := 'value 1';
       // add an array
-      Json.Add('array').ItemType := jitArray;
+      Json.Add('array', jitArray);
       for i := 1 to 3 do
         Json['array'].Add.AsInteger := i;
       // save a backup to file
@@ -752,6 +784,7 @@ begin
   Check(Test15, TotalPassed, TotalFailed);
   Check(Test16, TotalPassed, TotalFailed);
   Check(Test17, TotalPassed, TotalFailed);
+  Check(Test18, TotalPassed, TotalFailed);
 
   Check(Test99, TotalPassed, TotalFailed);
 
