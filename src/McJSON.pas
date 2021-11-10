@@ -119,6 +119,8 @@ type
     function ToString(aHuman: Boolean = False): string; overload;
     function Minify(const aCode: string): string;
 
+    procedure LoadFromStream(Stream: TStream; aUTF8: Boolean = True);
+    procedure SaveToStream(Stream: TStream; aHuman: Boolean = True);
     procedure LoadFromFile(const aFileName: string; aUTF8: Boolean = True);
     procedure SaveToFile(const aFileName: string; aHuman: Boolean = True);
 
@@ -1279,23 +1281,43 @@ begin
   Result := trimWS(aCode);
 end;
 
+procedure TMcJsonItem.LoadFromStream(Stream: TStream; aUTF8: Boolean);
+var
+  sCode: string;
+  size: Int64;
+begin
+  try
+  size := Stream.Size - Stream.Position;
+  sCode := '';
+  SetLength(sCode, size);
+  Stream.Read(PChar(sCode)^, size);
+  if aUTF8
+    then Self.AsJSON := UTF8Decode(sCode)
+    else Self.AsJSON := sCode;
+  except
+    Self.AsJSON := '';
+  end;
+end;
+
+procedure TMcJsonItem.SaveToStream(Stream: TStream; aHuman: Boolean);
+var
+  sCode: string;
+  size: Int64;
+begin
+  sCode := Self.ToString(aHuman);
+  size  := Length(sCode);
+  Stream.Write(PChar(sCode)^, size);
+end;
+
 procedure TMcJsonItem.LoadFromFile(const aFileName: string; aUTF8: Boolean);
 var
   fileStream: TFileStream;
-  code: AnsiString;
 begin
   fileStream := nil;
   try
     fileStream := TFileStream.Create(aFileName, fmOpenRead or fmShareDenyWrite);
     Clear;
-    if (fileStream.Size > 0) then
-    begin
-      SetLength(code, fileStream.Size);
-      fileStream.Read(code[1], fileStream.Size);
-    end;
-    if aUTF8
-      then Self.AsJSON := UTF8Decode(code)
-      else Self.AsJSON := code;
+    LoadFromStream(fileStream, aUTF8);
   finally
     fileStream.Free;
   end;
@@ -1304,13 +1326,11 @@ end;
 procedure TMcJsonItem.SaveToFile(const aFileName: string; aHuman: Boolean);
 var
   fileStream: TFileStream;
-  code: AnsiString;
 begin
   fileStream := nil;
   try
     fileStream := TFileStream.Create(aFileName, fmCreate or fmShareDenyWrite);
-    code := ToString(aHuman);
-    fileStream.Write(code[1], Length(code));
+    SaveToStream(fileStream, aHuman);
   finally
     fileStream.Free;
   end;
