@@ -298,8 +298,8 @@ begin
   Msg := 'Test 09: escapes';
   N := TMcJsonItem.Create;
   try
-    N.AsJSON := '{ "k": "\b\t\n\f\r\u \" \\ \/"}';
-    Result   := (N['k'].AsString = '\b\t\n\f\r\u \" \\ \/');
+    N.AsJSON := '{ "k": "\b\t\n\f\r\u05d1 \" \\ \/"}';
+    Result   := (N['k'].AsString = '\b\t\n\f\r\u05d1 \" \\ \/');
   except
     on E: Exception do
     begin
@@ -361,6 +361,9 @@ begin
     StrL.Add('bad value: json'           +'='+ '{"k":"{"key":"value"}"}');
     // unknown escape
     StrL.Add('bad value: unknown escape' +'='+ '{"k":"aa \x aa"}');
+    StrL.Add('bad value: bad u escape 1' +'='+ '{"k":"\u"}'      );
+    StrL.Add('bad value: bad u escape 2' +'='+ '{"k":"\u000"}'   );
+    StrL.Add('bad value: bad u escape 3' +'='+ '{"k":"\u0FaX"}'  );
     // check
     for i:=0 to StrL.Count-1 do
     begin

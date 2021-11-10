@@ -386,7 +386,6 @@ Error while parsing text: "line break" at pos "14"
 ## Known issues
 The world is not perfect and neither am I.
 Here are some known issues:
-* `McJSON` does not parse (escape) `\u` (+4 hexa chars) (e.g. `\uFFFF`) yet.
 * Exceptions with `at pos "x"` might not reflect the original position in JSON string due to `trimWS()`.
 * Trying to follow and confirm the [specification](https://www.json.org/json-en.html) using [JSONLint](https://jsonlint.com/).
 

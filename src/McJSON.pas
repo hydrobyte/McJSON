@@ -172,7 +172,7 @@ const
   SIGNS:      set of char = ['+', '-'];
   OPENS:      set of char = ['{', '['];
   CLOSES:     set of char = ['}', ']'];
-  HEXA:       set of char = ['0'..'9', 'A'..'F'];
+  HEXA:       set of char = ['0'..'9', 'A'..'F', 'a'..'f'];
 
 // Auxiliary functions
 function GetItemTypeStr(aType: TJItemType): string;
@@ -207,9 +207,25 @@ begin
   begin
     // check next char is escapable
     if (aPos < aLen) and
-       (aStr[aPos+1] in ESCAPES)
-      then n    := 2
-      else aUnk := True;
+       (aStr[aPos+1] in ESCAPES) then
+    begin
+      // one char escapes
+      if (aStr[aPos+1] <> 'u') then
+        n := 2
+      else
+      //  u+(4 hexa) escape
+      begin
+        if (aLen-aPos-1  >  4   ) and
+           (aStr[aPos+2] in HEXA) and
+           (aStr[aPos+3] in HEXA) and
+           (aStr[aPos+4] in HEXA) and
+           (aStr[aPos+5] in HEXA)
+          then n := 6        // \u1234 (6 chars)
+          else aUnk := True; // bad \u escape
+      end
+    // if not escapable
+    end
+    else aUnk := True;
   end;
   // return the gap escaped
   Result := n;
