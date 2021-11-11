@@ -717,6 +717,33 @@ begin
   Obj.Free;
 end;
 
+function Test19(out Msg: string): Boolean;
+var
+  N: TMcJsonItem;
+begin
+  Msg := 'Test 19: At() shortener for array item access';
+  N := TMcJsonItem.Create;
+  Result := True;
+  try
+    N.AsJSON := '{"a": [{"k1":1,"k2":2},{"k1":10,"k2":20}]}';
+    // how to access k2 in pos 1.
+    Result := Result and (N['a'].Values[1].Items['k2'].AsInteger = 20);
+    Result := Result and (N['a'].Values[1]['k2'].AsInteger       = 20);
+    Result := Result and (N['a'].At(1, 'k2').AsInteger           = 20);
+    // other uses
+    N.AsJSON := '{"k1":1,"k2":2,"k3":3,"k4":4}';
+    Result := Result and (N.Values[2].AsInteger = 3);
+    Result := Result and (N.At(2).AsInteger     = 3);
+  except
+    on E: Exception do
+    begin
+      Msg := Msg + #13#10 + sIndent + 'Error: ' + E.Message;
+      Result := False;
+    end;
+  end;
+  N.Free;
+end;
+
 function Test99(out Msg: string): Boolean;
 var
   Json: TMcJsonItem;
@@ -785,6 +812,7 @@ begin
   Check(Test16, TotalPassed, TotalFailed);
   Check(Test17, TotalPassed, TotalFailed);
   Check(Test18, TotalPassed, TotalFailed);
+  Check(Test19, TotalPassed, TotalFailed);
 
   Check(Test99, TotalPassed, TotalFailed);
 

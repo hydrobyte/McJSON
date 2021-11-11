@@ -115,6 +115,9 @@ type
     function IsEqual(const aItem: TMcJsonItem): Boolean;
     function Check(const aStr: string; aSpeedUp: Boolean = False): Boolean;
 
+    // array shortener
+    function At(aIdx: Integer; const aKey: string = ''): TMcJsonItem;
+
     function ToString: string; overload;
     function ToString(aHuman: Boolean = False): string; overload;
     function Minify(const aCode: string): string;
@@ -153,7 +156,7 @@ type
 
 implementation
 
-const C_MCJSON_VERSION = '0.9.4';
+const C_MCJSON_VERSION = '0.9.5';
 const C_EMPTY_KEY      = '__a3mptyStr__';
 
 resourcestring
@@ -1280,6 +1283,21 @@ begin
     Result := False;
   end;
   aItem.Free;
+end;
+
+function TMcJsonItem.At(aIdx: Integer; const aKey: string): TMcJsonItem;
+var
+  aItem: TMcJsonItem;
+begin
+  Result := nil;
+  aItem := fGetItemByIdx(aIdx);
+  if (aKey <> '') then
+  begin
+    aItem := aItem.fGetItemByKey(aKey);
+    if (aItem = nil) then
+      Error(SItemNil, 'get item by key ' + Qot(aKey));
+  end;
+  Result := aItem;
 end;
 
 function TMcJsonItem.ToString: string;
