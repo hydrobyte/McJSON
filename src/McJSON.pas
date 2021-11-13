@@ -114,6 +114,7 @@ type
     function HasKey(const aKey: string): Boolean;
     function IsEqual(const aItem: TMcJsonItem): Boolean;
     function Check(const aStr: string; aSpeedUp: Boolean = False): Boolean;
+    function CountItems: Integer;
 
     // array shortener
     function At(aIdx: Integer; const aKey: string = ''): TMcJsonItem;
@@ -156,7 +157,7 @@ type
 
 implementation
 
-const C_MCJSON_VERSION = '0.9.5';
+const C_MCJSON_VERSION = '0.9.6';
 const C_EMPTY_KEY      = '__a3mptyStr__';
 
 resourcestring
@@ -505,8 +506,14 @@ begin
   if (Self = nil) then Error(SItemNil, 'set as JSON');
   Clear;
   aValue := trimWS(aValue);
-  len := Length(aValue);
-  c   := Self.parse(aValue, 1, len);
+  len    := Length(aValue);
+  c      := 1;
+  try
+    c := Self.parse(aValue, 1, len);
+  except
+    on EOutOfMemory do
+      Error(SItemNil, 'out of memory with ' + IntToStr(CountItems) + ' items');
+  end;
   // valid-JSON
   if (c < len) then
     Error(SParsingError, 'bad json', IntToStr(len));
@@ -674,7 +681,7 @@ begin
   Self.fSetType(jitObject);
   first := True;
   // reading values until we reach a '}'
-  while (aCode[c] <> '}') and (c <= aLen) do
+  while ( (c <= aLen) and (aCode[c] <> '}') ) do
   begin
     // parse ','
     if (not first) then
@@ -729,7 +736,7 @@ begin
   Self.fSetType(jitArray);
   first := True;
   // reading values until we reach a ']'
-  while (aCode[c] <> ']') and (c <= aLen) do
+  while ( (c <= aLen) and (aCode[c] <> ']') ) do
   begin
     // parse ','
     if (not first) then
@@ -766,7 +773,7 @@ begin
   if (aCode[c] = '"') then
   begin
     Inc(c);
-    while (aCode[c] <> '"') and (c <= aLen) do
+    while ( (c <= aLen) and (aCode[c] <> '"') ) do
     begin
       // do escapes
       Inc(c, escapeChar(aCode, c, aLen, unk));
@@ -1059,10 +1066,9 @@ end;
 
 destructor TMcJsonItem.Destroy;
 begin
-  // mem leaks prevention
   Clear;
   fChild.Free;
-  inherited;
+  inherited Destroy;
 end;
 
 procedure TMcJsonItem.Clear;
@@ -1070,11 +1076,10 @@ var
   i: Integer;
 begin
   if (Self = nil) then Error(SItemNil, 'clear');
-  // recursively removes all childs
+  // free memory of all children (will be recursive)
   for i := 0 to (fChild.Count - 1) do
-  begin
     TMcJsonItem(fChild[i]).Free;
-  end;
+  // clear list
   fChild.Clear;
 end;
 
@@ -1285,6 +1290,22 @@ begin
   aItem.Free;
 end;
 
+function TMcJsonItem.CountItems: Integer;
+
+  function CountItemsRec(const aItem: TMcJsonItem): Integer;
+  var
+    i, sum: Integer;
+  begin
+    sum := aItem.Count;
+    for i := 0 to aItem.Count-1 do
+      sum := sum + CountItemsRec( TMcJsonItem(aItem.fChild[i]) );
+    Result := sum;
+  end;
+
+begin
+  Result := CountItemsRec(Self);
+end;
+
 function TMcJsonItem.At(aIdx: Integer; const aKey: string): TMcJsonItem;
 var
   aItem: TMcJsonItem;
@@ -1295,7 +1316,7 @@ begin
   begin
     aItem := aItem.fGetItemByKey(aKey);
     if (aItem = nil) then
-      Error(SItemNil, 'get item by key ' + Qot(aKey));
+      Error(SItemNil, 'at item with key ' + Qot(aKey));
   end;
   Result := aItem;
 end;
@@ -1320,7 +1341,6 @@ var
   sCode: string;
   size: Int64;
 begin
-  try
   size := Stream.Size - Stream.Position;
   sCode := '';
   SetLength(sCode, size);
@@ -1328,9 +1348,6 @@ begin
   if aUTF8
     then Self.AsJSON := UTF8Decode(sCode)
     else Self.AsJSON := sCode;
-  except
-    Self.AsJSON := '';
-  end;
 end;
 
 procedure TMcJsonItem.SaveToStream(Stream: TStream; aHuman: Boolean);

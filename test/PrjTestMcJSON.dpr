@@ -788,6 +788,8 @@ procedure RunTests;
 var
   TotalPassed, TotalFailed: Integer;
 begin
+//  ReportMemoryLeaksOnShutdown := true;
+
   TotalPassed := 0;
   TotalFailed := 0;
 
