@@ -36,7 +36,7 @@ begin
   Msg := 'Test 01: parse simple object';
   N := TMcJsonItem.Create;
   try
-    N.AsJSON := '{ "key": "value" }';
+    N.AsJSON := ' { "key" : "value" } ';
     Result   :=   (N.ItemType               = jitObject)
               and (N.Count                  = 1        )
               and (N.Key                    = ''       )
@@ -402,11 +402,14 @@ begin
     StrL.Add('key: empty'          +'='+ '{"":"value"}'               );
     StrL.Add('key: keyword'        +'='+ '{"{":"value"}'              );
     // values
+    StrL.Add('value: alone'        +'='+ '"k"'                        );
     StrL.Add('value: leading zero' +'='+ '{"k": 0.1234}'              );
     // objects
     StrL.Add('object: empty'       +'='+ '{}'                         );
+    StrL.Add('object: empty w key' +'='+ '{"o": { }}'                 );
     // arrays
     StrL.Add('array: empty no key' +'='+ '[]'                         );
+    StrL.Add('array: empty w key'  +'='+ '{"a": [ ]}'                 );
     StrL.Add('array: empty'        +'='+ '{"k":[]}'                   );
     StrL.Add('array: no root'      +'='+ '[1,2]'                      );
     StrL.Add('array: bi openned'   +'='+ '{"k":[["1","2"]]}'          );

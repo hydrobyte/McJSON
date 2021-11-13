@@ -157,7 +157,7 @@ type
 
 implementation
 
-const C_MCJSON_VERSION = '0.9.6';
+const C_MCJSON_VERSION = '0.9.7';
 const C_EMPTY_KEY      = '__a3mptyStr__';
 
 resourcestring
@@ -230,6 +230,21 @@ begin
     // if not escapable
     end
     else aUnk := True;
+  end;
+  // return the gap escaped
+  Result := n;
+end;
+
+function escapeWS(const aStr: string; aPos, aLen: Integer): Integer;
+var
+  n,c: Integer;
+begin
+  c := aPos;
+  n := 0;
+  while (c <= aLen) and (aStr[c] in WHITESPACE) do
+  begin
+    Inc(c);
+    Inc(n);
   end;
   // return the gap escaped
   Result := n;
@@ -505,9 +520,8 @@ var
 begin
   if (Self = nil) then Error(SItemNil, 'set as JSON');
   Clear;
-  aValue := trimWS(aValue);
-  len    := Length(aValue);
-  c      := 1;
+  len := Length(aValue);
+  c   := 1;
   try
     c := Self.parse(aValue, 1, len);
   except
@@ -650,6 +664,8 @@ begin
   // check position
   if (aPos > aLen) then
     Exit;
+  // escape white spaces
+  Inc(aPos, escapeWS(aCode, aPos, aLen));
   // now in the first character our open parenthesis
   case aCode[aPos] of
     '{':                aPos := readObject (aCode, aPos, aLen); // recursive
@@ -664,6 +680,8 @@ begin
       Error(SParsingError, 'invalid char', IntToStr(aPos));
     end;
   end;
+  // escape white spaces
+  Inc(aPos, escapeWS(aCode, aPos, aLen));
   // move on
   Result := aPos;
 end;
@@ -676,7 +694,9 @@ var
   first: Boolean;
 begin
   // we got here because current symbol was '{'
-  c  := aPos+1; // char iterator
+  c  := aPos+1; 
+  // escape white spaces
+  Inc(c, escapeWS(aCode, c, aLen));
   // set item type
   Self.fSetType(jitObject);
   first := True;
@@ -685,12 +705,11 @@ begin
   begin
     // parse ','
     if (not first) then
-    begin
       c := readChar(aCode, ',', c, aLen);
-      Inc(c);
-    end;
     first := False;
-    // parsing a "key"
+    // escape white spaces
+    Inc(c, escapeWS(aCode, c, aLen));
+    // parsing a "key", stop next to '"'
     c := readString(aCode, sKey, c, aLen);
     // check empty key like {"":"value"}
     if (sKey = '') then
@@ -707,21 +726,25 @@ begin
         then aItem := Self.Add(sKey)
         else Error(SParsingError, 'duplicated key ' + sKey, IntToStr(c));
     end;
+    // escape white spaces
+    Inc(c, escapeWS(aCode, c, aLen));
     // parse ':'
-    c := readChar(aCode, ':', c+1, aLen);
+    c := readChar(aCode, ':', c, aLen);
+    // escape white spaces
+    Inc(c, escapeWS(aCode, c, aLen));
     // parsing a value (recursive)
     if (aItem <> nil) then
-      c := aItem.parse(aCode, c+1, aLen);
+      c := aItem.parse(aCode, c, aLen);
     // move on
-    Inc(c);
+    Inc(c, escapeWS(aCode, c, aLen));
   end;
   // valid-JSON
   if (c > aLen) then
     Error(SParsingError, 'bad object', IntToStr(aLen))
   else if (aCode[c] <> '}') then
     Error(SParsingError, 'bad object', IntToStr(c)   );
-  // stop at '}'
-  Result := c;
+  // stop next to '}'
+  Result := c+1;
 end;
 
 function TMcJsonItem.readArray(const aCode: string; aPos, aLen: Integer): Integer;
@@ -732,6 +755,8 @@ var
 begin
   // we got here because current symbol was '['
   c := aPos+1;
+  // escape white spaces
+  Inc(c, escapeWS(aCode, c, aLen));
   // set item type
   Self.fSetType(jitArray);
   first := True;
@@ -740,11 +765,10 @@ begin
   begin
     // parse ','
     if (not first) then
-    begin
       c := readChar(aCode, ',', c, aLen);
-      Inc(c);
-    end;
     first := False;
+    // escape white spaces
+    Inc(c, escapeWS(aCode, c, aLen));
     // Creating a new value (here explicity whith no key)
     aItem := Self.Add();
     // parsing values (recursive)
@@ -752,15 +776,15 @@ begin
     if (c > aLen) then
       Error(SParsingError, 'bad array', IntToStr(aLen));
     // move on
-    Inc(c);
+    Inc(c, escapeWS(aCode, c, aLen));
   end;
   // valid-JSON
   if (c > aLen) then
     Error(SParsingError, 'bad object', IntToStr(aLen))
   else if (aCode[c] <> ']') then
     Error(SParsingError, 'bad array', IntToStr(c)   );
-  // stop at ']'
-  Result := c;
+  // stop next to ']'
+  Result := c+1;
 end;
 
 function TMcJsonItem.readString(const aCode: string; out aStr:string; aPos, aLen: Integer): Integer;
@@ -770,7 +794,7 @@ var
 begin
   aStr := '';
   c    := aPos;
-  if (aCode[c] = '"') then
+  if (aCode[aPos] = '"') then
   begin
     Inc(c);
     while ( (c <= aLen) and (aCode[c] <> '"') ) do
@@ -785,13 +809,11 @@ begin
         Error(SParsingError, 'unknown escape', IntToStr(c));
     end;
     // copy between '"'
-    if (aCode[aPos] = '"') and
-       (aCode[c   ] = '"') then
-    begin
+    if (aCode[c] = '"') then
       aStr := System.Copy(aCode, aPos+1, c-aPos-1); // "string" -> string
-    end;
   end;
-  // stop at '"'
+  // stop next to '"'
+  if (c < aLen) then Inc(c);
   Result := c;
 end;
 
@@ -799,8 +821,8 @@ function TMcJsonItem.readChar(const aCode: string; aChar: Char; aPos, aLen: Inte
 begin
   if ( aCode[aPos] <> aChar ) then
     Error(SParsingError, 'expected ' + aChar + ' got ' + aCode[aPos], IntToStr(aPos));
-  // stop at aChar
-  Result := aPos;
+  // stop next to aChar
+  Result := aPos+1;
 end;
 
 function TMcJsonItem.readKeyword(const aCode, aKeyword: string; aPos, aLen: Integer): Integer;
@@ -813,8 +835,8 @@ begin
   // valid-JSON
   if (Lowercase(sAux) <> aKeyword) then
     Error(SParsingError, 'invalid keyword ' + sAux, IntToStr(aPos));
-  // stop at keyword last char
-  Result := aPos + len - 1;
+  // stop next to keyword last char
+  Result := aPos + len;
 end;
 
 function TMcJsonItem.readValue(const aCode: string; aPos, aLen: Integer): Integer;
@@ -833,7 +855,7 @@ begin
   Self.fSetType(jitValue);
   Self.fValType := jvtString;
   Self.fValue   := sVal;
-  // stop at '"'
+  // stop next to '"'
   Result := c;
 end;
 
@@ -868,6 +890,12 @@ begin
     if (ePos+1 = c) then
       Error(SParsingError, 'bad scientific number', IntToStr(c));
   end;
+  // Result
+  Self.fSetType(jitValue);
+  Self.fValType := jvtNumber;
+  Self.fValue   := System.Copy(aCode, aPos, c-aPos);
+  // escape white spaces
+  Inc(c, escapeWS(aCode, c, aLen));
   // valid-JSON: not a number
   if not ((aCode[c] = ','    ) or
           (aCode[c] in CLOSES)) then
@@ -876,15 +904,7 @@ begin
   if (aCode[aPos]   =  '0') and (aPos < aLen) and (c-aPos > 1) and
      (aCode[aPos+1] <> '.') then
     Error(SParsingError, 'bad number, leading zero', IntToStr(c));
-  // Result
-  Self.fSetType(jitValue);
-  Self.fValType := jvtNumber;
-  Self.fValue   := System.Copy(aCode, aPos, c-aPos);
-  // go back one char
-  if (aCode[c] = ','    ) or
-     (aCode[c] in CLOSES) then
-    Dec(c);
-  // stop at number last char
+  // stop next to number last char
   Result := c;
 end;
 
@@ -913,7 +933,7 @@ begin
   // set item and value types
   Self.fSetType(jitValue);
   Self.fValType := jvtBoolean;
-  // stop at keyword last char
+  // stop next to keyword last char
   Result := c;
 end;
 
@@ -935,7 +955,7 @@ begin
   // set item and value types
   Self.fSetType(jitValue);
   Self.fValType := jvtNull;
-  // stop at keyword last char
+  // stop next to keyword last char
   Result := c;
 end;
 
@@ -1282,7 +1302,7 @@ begin
   try
     aItem.fSpeedUp := aSpeedUp;
     aItem.AsJSON   := aStr;
-    //Result := True;
+//    Result := True;
     Result := (aItem.AsJSON = trimWS(aStr));
   except
     Result := False;
