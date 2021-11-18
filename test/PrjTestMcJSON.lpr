@@ -509,18 +509,21 @@ begin
     // now add a array of objects
     N.Add('array').ItemType := jitArray;
     for i := 1 to 2 do
-      N['array'].Add.AsJSON := '{"k'+IntToStr(i)+'": "v'+IntToStr(i)+'"}';
-    // save to file (not Human readable)
-    N.SaveToFile('test12.json', false);
+      N['array'].Add.AsJSON := '{"k'+IntToStr(i)+'": "ח'+IntToStr(i)+'"}';
+    // save to file (not Human readable and UTF-8)
+    N.SaveToFile('test13.json', false);
     // change N using IndexOf
     idx := N.IndexOf('array');
     if (idx >= 0) then
       N.Delete(idx);
-    // load from file
-    M.LoadFromFile('test12.json');
+    // load from file (UTF-8 by default)
+    M.LoadFromFile('test13.json');
     // check before and after delete
     Result := Result and (N.AsJSON = '{"i":123}'                                  )
-                     and (M.AsJSON = '{"i":123,"array":[{"k1":"v1"},{"k2":"v2"}]}');
+                     and (M.AsJSON = '{"i":123,"array":[{"k1":"ח1"},{"k2":"ח2"}]}');
+    // load a UTF-8 file
+    M.LoadFromFile('test13-UTF8.json');
+    Result := Result and (M['utf8'].AsString = 'דחüצ');
   except
     on E: Exception do
     begin

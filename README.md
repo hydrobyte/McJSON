@@ -344,7 +344,7 @@ And using a example like `testInspect.json`:
    ],
    "Msg": [
       "#1 UTF8 example: motivação",
-      "#2 Scapes: \b\t\n\f\r\\u\"\\"
+      "#2 Scapes: \b\t\n\f\r\\uFFFF\"\\"
    ]
 }
 ```
@@ -372,9 +372,9 @@ object; string; Key=; Value=; JSON={"foo":"bar","array":[100,20],"arrayObj":[{"k
        value; number; Key=key1; Value=1.0; JSON="key1":1.0
      object; string; Key=; Value=; JSON={"key2":2.0}
        value; number; Key=key2; Value=2.0; JSON="key2":2.0
-   array; string; Key=Msg; Value=; JSON="Msg":["#1 UTF8 example: motivação","#2 Scapes: \b\t\n\f\r\u\"\\"]
+   array; string; Key=Msg; Value=; JSON="Msg":["#1 UTF8 example: motivação","#2 Scapes: \b\t\n\f\r\uFFFF\"\\"]
      value; string; Key=; Value=#1 UTF8 example: motivação; JSON="#1 UTF8 example: motivação"
-     value; string; Key=; Value=#2 Scapes: \b\t\n\f\r\u\"\\; JSON="#2 Scapes: \b\t\n\f\r\u\"\\"
+     value; string; Key=; Value=#2 Scapes: \b\t\n\f\r\uFFFF\"\\; JSON="#2 Scapes: \b\t\n\f\r\uFFFF\"\\"
 ```
 
 ### A note about empty keys
@@ -399,6 +399,10 @@ Will raise exception:
 ```
 Error while parsing text: "line break" at pos "14"
 ```
+
+### Load from and Save to Files
+`McJSON` can load from ASCII and UTF-8 files (without BOM). See `LoadFromFile` method.
+The `SaveToFile` method will write using UTF-8 encoding.
 
 ## Known issues
 The world is not perfect and neither am I.

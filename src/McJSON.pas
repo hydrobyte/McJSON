@@ -157,7 +157,7 @@ type
 
 implementation
 
-const C_MCJSON_VERSION = '0.9.7';
+const C_MCJSON_VERSION = '0.9.8';
 const C_EMPTY_KEY      = '__a3mptyStr__';
 
 resourcestring
@@ -174,7 +174,6 @@ const
   ESCAPES:    set of char = ['b', 't', 'n', 'f', 'r', 'u', '"', '\', '/'];
   DIGITS:     set of char = ['0'..'9'];
   SIGNS:      set of char = ['+', '-'];
-  OPENS:      set of char = ['{', '['];
   CLOSES:     set of char = ['}', ']'];
   HEXA:       set of char = ['0'..'9', 'A'..'F', 'a'..'f'];
 
@@ -1358,26 +1357,26 @@ end;
 
 procedure TMcJsonItem.LoadFromStream(Stream: TStream; aUTF8: Boolean);
 var
-  sCode: string;
-  size: Int64;
+  sCode: AnsiString;
+  len  : Int64;
 begin
-  size := Stream.Size - Stream.Position;
+  len   := Stream.Size - Stream.Position;
   sCode := '';
-  SetLength(sCode, size);
-  Stream.Read(PChar(sCode)^, size);
+  SetLength(sCode, len);
+  Stream.Read(Pointer(sCode)^, len);
   if aUTF8
-    then Self.AsJSON := UTF8Decode(sCode)
+    then Self.AsJSON := Utf8ToAnsi(sCode)
     else Self.AsJSON := sCode;
 end;
 
 procedure TMcJsonItem.SaveToStream(Stream: TStream; aHuman: Boolean);
 var
-  sCode: string;
-  size: Int64;
+  sCode: AnsiString;
+  len  : Int64;
 begin
-  sCode := Self.ToString(aHuman);
-  size  := Length(sCode);
-  Stream.Write(PChar(sCode)^, size);
+  sCode := AnsiToUtf8(Self.ToString(aHuman));
+  len   := Length(sCode);
+  Stream.Write(Pointer(sCode)^, len);
 end;
 
 procedure TMcJsonItem.LoadFromFile(const aFileName: string; aUTF8: Boolean);
