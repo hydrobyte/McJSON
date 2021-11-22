@@ -108,9 +108,9 @@ bool Test99(AnsiString& Msg)
       // add an array
       Json->Add("array", jitArray);
       for (int i = 1; i <= 3 ; i++)
-        Json->Items["array"]->Add()->AsInteger = i;
+        Json->Values["array"]->Add()->AsInteger = i;
       // save a backup to file
-      if (Json->Items["array"]->Count == 3)
+      if (Json->Values["array"]->Count == 3)
         Json->SaveToFile("test99.json");
       // remove an item
       Json->Delete("array");
@@ -162,7 +162,7 @@ Here is how to access all items (children) of a JSON object and change their val
 N.AsJSON := '{"o": {"k1":"v1", "k2":"v2"}}';
 // type and value: from string to integer
 for i := 0 to N['o'].Count-1 do  
-  N['o'].Values[i].AsInteger := i+1;   
+  N['o'].Items[i].AsInteger := i+1;   
 ```
 Results in:
 ```json
@@ -175,20 +175,20 @@ Results in:
 ```
 
 ### Shortener for array item access
-We can use the `Values[index]` and `Items['key']` properties to access items inside objects and arrays. 
+We can use the `Items[index]` and `Values['key']` properties to access items inside objects and arrays. 
 Since version `0.9.5`, we can use the `At(index, 'key')` as a shortener.
 ```pascal
 N.AsJSON := '{"a": [{"k1":1,"k2":2},{"k1":10,"k2":20}]}';
 // how to access k2 of second object.
-i := N['a'].Values[1].Items['k2'].AsInteger; // i will be equal to 20
-i := N['a'].Values[1]['k2'].AsInteger;       // uses the Items[] as default property
+i := N['a'].Items[1].Values['k2'].AsInteger; // i will be equal to 20
+i := N['a'].Items[1]['k2'].AsInteger;        // uses the Values[] as default property
 i := N['a'].At(1, 'k2').AsInteger;           // shortener
 ```
 And there are other uses without the `key` parameter:
 ```pascal
 N.AsJSON := '{"k1":1,"k2":2,"k3":3,"k4":4}';
-i := N.Values[2].AsInteger; // i will be equal to 3
-i := N.At(2).AsInteger;     // shortener
+i := N.Items[2].AsInteger; // i will be equal to 3
+i := N.At(2).AsInteger;    // shortener
 ```
 
 ### Enumerate
@@ -307,7 +307,7 @@ TFormMain::Inspect(TMcJsonItem* AMcJItem, AnsiString Ident)
     Ident = "  " + Ident;
     for (int i=0; i < AMcJItem->Count; i++)
     { // use Value not Child because are note using Key[].
-      Inspect( AMcJItem->Values[i], Ident );
+      Inspect( AMcJItem->Items[i], Ident );
     }
   }
 }

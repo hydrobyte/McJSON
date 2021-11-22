@@ -77,8 +77,8 @@ type
     property ItemType: TJItemType read fGetType write fSetType;
 
     property Keys  [aIdx      : Integer]: string      read fGetKey;
-    property Values[aIdx      : Integer]: TMcJsonItem read fGetItemByIdx;
-    property Items [const aKey: string ]: TMcJsonItem read fGetItemByKey; default;
+    property Items [aIdx      : Integer]: TMcJsonItem read fGetItemByIdx;
+    property Values[const aKey: string ]: TMcJsonItem read fGetItemByKey; default;
 
     property HasChild: Boolean read fHasChild;
     property IsNull  : Boolean read fIsNull;
@@ -140,7 +140,7 @@ type
                                        const S3: string = '');
   end;
 
-  { TMcJsonItemEnumerator }
+  // TMcJsonItemEnumerator
   TMcJsonItemEnumerator = class
   strict private
     fItem : TMcJsonItem;
@@ -152,12 +152,13 @@ type
     property Current: TMcJsonItem read GetCurrent;
   end;
 
+  // Auxiliary functions
   function GetItemTypeStr(aType: TJItemType): string;
   function GetValueTypeStr(aType: TJValueType): string;
 
 implementation
 
-const C_MCJSON_VERSION = '0.9.8';
+const C_MCJSON_VERSION = '0.9.9';
 const C_EMPTY_KEY      = '__a3mptyStr__';
 
 resourcestring
@@ -177,28 +178,9 @@ const
   CLOSES:     set of char = ['}', ']'];
   HEXA:       set of char = ['0'..'9', 'A'..'F', 'a'..'f'];
 
-// Auxiliary functions
-function GetItemTypeStr(aType: TJItemType): string;
-begin
-  Result := 'unknown';
-  case aType of
-    jitValue : Result := 'value' ;
-    jitObject: Result := 'object';
-    jitArray : Result := 'array' ;
-    jitUnset : Result := 'unset' ;
-  end;
-end;
-
-function GetValueTypeStr(aType: TJValueType): string;
-begin
-  Result := 'unknown';
-  case aType of
-    jvtString : Result := 'string' ;
-    jvtNumber : Result := 'number' ;
-    jvtBoolean: Result := 'boolean';
-    jvtNull   : Result := 'null'   ;
-  end;
-end;
+{ ---------------------------------------------------------------------------- }
+{ Auxiliary private functions }
+{ ---------------------------------------------------------------------------- }
 
 function escapeChar(const aStr: string; aPos, aLen: Integer; out aUnk: Boolean): Integer;
 var
@@ -343,7 +325,7 @@ begin
   // range check
   if (not isIndexValid(aIdx)) then
     Error(SIndexInvalid, 'get item by index ' + IntToStr(aIdx));
-  // object cannot return an element with an index higher than the maximum
+  // return valid child at index aIdx
   Result := TMcJsonItem(fChild[aIdx]);
 end;
 
@@ -1330,8 +1312,10 @@ var
   aItem: TMcJsonItem;
 begin
   Result := nil;
+  // get by index
   aItem := fGetItemByIdx(aIdx);
-  if (aKey <> '') then
+  // get by key
+  if ((aKey <> '') and (aItem <> nil)) then
   begin
     aItem := aItem.fGetItemByKey(aKey);
     if (aItem = nil) then
@@ -1473,6 +1457,31 @@ begin
   if (fItem.fChild = nil)
     then Result := False
     else Result := (fIndex < fItem.fChild.Count);
+end;
+
+{ ---------------------------------------------------------------------------- }
+{ Auxiliary public functions }
+{ ---------------------------------------------------------------------------- }
+function GetItemTypeStr(aType: TJItemType): string;
+begin
+  Result := 'unknown';
+  case aType of
+    jitValue : Result := 'value' ;
+    jitObject: Result := 'object';
+    jitArray : Result := 'array' ;
+    jitUnset : Result := 'unset' ;
+  end;
+end;
+
+function GetValueTypeStr(aType: TJValueType): string;
+begin
+  Result := 'unknown';
+  case aType of
+    jvtString : Result := 'string' ;
+    jvtNumber : Result := 'number' ;
+    jvtBoolean: Result := 'boolean';
+    jvtNull   : Result := 'null'   ;
+  end;
 end;
 
 end.

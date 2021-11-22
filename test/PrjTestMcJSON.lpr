@@ -46,8 +46,8 @@ begin
               and (N['key'].Key             = 'key'    )
               and (N['key'].AsString        = 'value'  )
               and (N.Keys[0]                = 'key'    )
-              and (N.Values[0].AsString     = 'value'  )
-              and (N.Items['key'].AsString  = 'value'  );
+              and (N.Items[0].AsString      = 'value'  )
+              and (N.Values['key'].AsString = 'value'  );
   except
     on E: Exception do
     begin
@@ -71,8 +71,8 @@ begin
               and (N['array'].ItemType            = jitArray )
               and (N['array'].Count               = 3        )
               and (N['array'].Key                 = 'array'  )
-              and (N['array'].Values[1].AsString  = '2.0'    )
-              and (N['array'].Values[2].AsInteger = 3        );
+              and (N['array'].Items[1].AsString   = '2.0'    )
+              and (N['array'].Items[2].AsInteger  = 3        );
   except
     on E: Exception do
     begin
@@ -96,8 +96,8 @@ begin
               and (N['sub'].ItemType                    = jitArray )
               and (N['sub'].Count                       = 2        )
               and (N['sub'].Key                         = 'sub'    )
-              and (N['sub'].Values[1]['key2'].Key       = 'key2'   )
-              and (N['sub'].Values[1]['key2'].AsInteger = 2        );
+              and (N['sub'].Items[1]['key2'].Key        = 'key2'   )
+              and (N['sub'].Items[1]['key2'].AsInteger  = 2        );
   except
     on E: Exception do
     begin
@@ -147,8 +147,8 @@ begin
               and (N['sub'].ItemType                    = jitArray )
               and (N['sub'].Count                       = 3        )
               and (N['sub'].Key                         = 'sub'    )
-              and (N['sub'].Values[2]['key3'].Key       = 'key3'   )
-              and (N['sub'].Values[2]['key3'].AsInteger = 3        );
+              and (N['sub'].Items[2]['key3'].Key        = 'key3'   )
+              and (N['sub'].Items[2]['key3'].AsInteger  = 3        );
     // add nested object
     N.Clear;
     N.Add('k1').Add('k2').Add('k3').AsString := 'v3';
@@ -217,9 +217,9 @@ begin
   N := TMcJsonItem.Create;
   try
     N.AsJSON := '{ "array": [1, "2", 3] }';
-    //N['not'].Values[3].AsInteger := 4;
-    N['array'].Values[3].AsInteger := 4;
-    //N['array'].Items[0].SetInt(4);        // will not compile in Delphi
+    //N['not'].Items[3].AsInteger := 4;
+    N['array'].Items[3].AsInteger := 4;
+    //N['array'].Values[0].SetInt(4);        // will not compile in Delphi
     Result := False;
   except
     on E: Exception do
@@ -458,8 +458,8 @@ begin
                      and (N['k1']['0'].AsString      = '1'      )
                      and (N['k1']['1'].AsString      = '2'      )
                      and (N['k2'].ItemType           = jitArray )
-                     and (N['k2'].Values[0].AsString = 'a'      )
-                     and (N['k2'].Values[1].AsString = 'b'      );
+                     and (N['k2'].Items[0].AsString  = 'a'      )
+                     and (N['k2'].Items[1].AsString  = 'b'      );
     // array and value setters
     N.AsJSON := '{ "a": ["1", "2"]}';
     N['a'].AsInteger := 1;
@@ -624,7 +624,7 @@ begin
       end
       else if (i = 2) then
       begin
-        N['s'].Values[1].AsInteger;
+        N['s'].Items[1].AsInteger;
         anyPass := True;
       end
       // Exception Invalid item type
@@ -736,12 +736,12 @@ begin
   try
     N.AsJSON := '{"a": [{"k1":1,"k2":2},{"k1":10,"k2":20}]}';
     // how to access k2 in pos 1.
-    Result := Result and (N['a'].Values[1].Items['k2'].AsInteger = 20);
-    Result := Result and (N['a'].Values[1]['k2'].AsInteger       = 20);
+    Result := Result and (N['a'].Items[1].Values['k2'].AsInteger = 20);
+    Result := Result and (N['a'].Items[1]['k2'].AsInteger        = 20);
     Result := Result and (N['a'].At(1, 'k2').AsInteger           = 20);
     // other uses
     N.AsJSON := '{"k1":1,"k2":2,"k3":3,"k4":4}';
-    Result := Result and (N.Values[2].AsInteger = 3);
+    Result := Result and (N.Items[2].AsInteger  = 3);
     Result := Result and (N.At(2).AsInteger     = 3);
   except
     on E: Exception do
