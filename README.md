@@ -156,6 +156,23 @@ Answer := N.Check( '{"i":[123}' );
 // Error while parsing text: "expected , got }" at pos "10"
 ```
 
+### Paths
+`McJSON` allows a simple way to access items through paths. We can use '/' or '\' as path separators.
+```pascal
+N.AsJSON := '{"o": {"k1":"v1", "k2":"v2"}}';
+// access and change second object's value
+N.Path('o/k2').AsString := 'value2';
+```  
+Results in:
+```json
+{
+   "o": {
+      "k1":"v1",
+      "k2":"value2"
+   }
+}
+```
+
 ### Array or object items
 Here is how to access all items (children) of a JSON object and change their value type and content.
 ```pascal

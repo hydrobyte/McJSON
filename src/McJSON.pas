@@ -1,4 +1,29 @@
-﻿unit McJSON;
+﻿(*****************************************************************************
+
+The MIT License (MIT)
+
+Copyright (c) 2021 HydroByte Software
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*****************************************************************************)
+
+unit McJSON;
 
 interface
 
@@ -101,6 +126,7 @@ type
 
     procedure Clear;
     function IndexOf(const aKey: string): Integer; overload;
+    function Path(const aPath: string): TMcJsonItem; overload;
     function Add(const aKey: string = ''): TMcJsonItem; overload;
     function Add(const aKey: string; aItemType: TJItemType): TMcJsonItem; overload;
     function Add(aItemType: TJItemType): TMcJsonItem; overload;
@@ -117,7 +143,8 @@ type
     function CountItems: Integer;
 
     // array shortener
-    function At(aIdx: Integer; const aKey: string = ''): TMcJsonItem;
+    function At(aIdx: Integer; const aKey: string = ''): TMcJsonItem; overload;
+    function At(const aKey: string; aIdx: Integer = -1): TMcJsonItem; overload;
 
     function ToString: string; overload;
     function ToString(aHuman: Boolean = False): string; overload;
@@ -158,7 +185,7 @@ type
 
 implementation
 
-const C_MCJSON_VERSION = '0.9.9';
+const C_MCJSON_VERSION = '1.0.0';
 const C_EMPTY_KEY      = '__a3mptyStr__';
 
 resourcestring
@@ -177,6 +204,7 @@ const
   SIGNS:      set of char = ['+', '-'];
   CLOSES:     set of char = ['}', ']'];
   HEXA:       set of char = ['0'..'9', 'A'..'F', 'a'..'f'];
+  PATHSEPS:   set of char = ['\', '/'];
 
 { ---------------------------------------------------------------------------- }
 { Auxiliary private functions }
@@ -290,8 +318,7 @@ begin
   // return the key of the idx-th child
   Result := '';
   aItem := fGetItemByIdx(aIdx);
-  if (aItem <> nil) then
-    Result := aItem.fKey;
+  Result := aItem.fKey;
 end;
 
 function TMcJsonItem.fGetType(): TJItemType;
@@ -310,18 +337,18 @@ begin
   // find index of item with aKey
   idx := Self.IndexOf(aKey);
   if (idx >= 0)
-    then Result := TMcJsonItem(fChild[idx]);
+    then Result := TMcJsonItem(fChild[idx])
+    else Error(SItemNil, 'get item by key ' + Qot(aKey));
 end;
 
 function TMcJsonItem.fGetItemByIdx(aIdx: Integer): TMcJsonItem;
 begin
-  Result := nil;
   // check
   if (Self = nil) then Error(SItemNil, 'get item by index ' + IntToStr(aIdx));
   // type compatibility check
   if (fType <> jitObject) and
      (fType <> jitArray ) then
-    Exit;
+    Error(SItemNil, 'get item by index ' + IntToStr(aIdx));
   // range check
   if (not isIndexValid(aIdx)) then
     Error(SIndexInvalid, 'get item by index ' + IntToStr(aIdx));
@@ -783,7 +810,7 @@ begin
       // do escapes
       Inc(c, escapeChar(aCode, c, aLen, unk));
       // Valid-JSON: break lines
-      if (aCode[c] in LINEBREAK) then
+      if (c > aLen) or (aCode[c] in LINEBREAK) then
         Error(SParsingError, 'line break', IntToStr(c));
       // Valid-JSON: unknown escape
       if (unk) then
@@ -1107,6 +1134,49 @@ begin
     Result := idx;
 end;
 
+function TMcJsonItem.Path(const aPath: string): TMcJsonItem;
+
+  function GetKeyByPath(const aPath: string; out aPos, aLen: Integer): string;
+  var
+    c: Integer;
+  begin
+    Result := '';
+    // check start with sep
+    if (aPath[aPos] in PATHSEPS) then
+      Inc(aPos);
+    c := aPos;
+    while (c <= aLen) and not (aPath[c] in PATHSEPS) do
+    begin
+      Inc(c);
+    end;
+    // copy between seps
+    if (c-aPos >= 0) then
+      Result := System.Copy(aPath, aPos, c-aPos);
+    // move on  
+    aPos := c;
+  end;
+
+var
+  aItem: TMcJsonItem;
+  c, len: Integer;
+  sKey: string;
+begin
+  if (Self = nil) then Error(SItemNil, 'get by path ' + Qot(aPath));
+  aItem  := Self;
+  // parse path of keys using seps
+  c   := 1;
+  len := Length(aPath);
+  while (c < len) do
+  begin
+    // get by key
+    sKey := GetKeyByPath(aPath, c, len);
+    if (sKey <> '') then
+      aItem := aItem.fGetItemByKey(sKey);
+  end;
+  // result aItem to permit chain
+  Result := aItem;
+end;
+
 function TMcJsonItem.Add(const aKey: string): TMcJsonItem;
 var
   aItem: TMcJsonItem;
@@ -1264,7 +1334,12 @@ end;
 function TMcJsonItem.HasKey(const aKey: string): Boolean;
 begin
   if (Self = nil) then Error(SItemNil, 'has key ' + Qot(aKey));
-  Result := ( fGetItemByKey(aKey) <> nil );
+  try
+    fGetItemByKey(aKey);
+    Result := True;
+  except
+    Result := False;
+  end;
 end;
 
 function TMcJsonItem.IsEqual(const aItem: TMcJsonItem): Boolean;
@@ -1311,16 +1386,23 @@ function TMcJsonItem.At(aIdx: Integer; const aKey: string): TMcJsonItem;
 var
   aItem: TMcJsonItem;
 begin
-  Result := nil;
   // get by index
   aItem := fGetItemByIdx(aIdx);
   // get by key
   if ((aKey <> '') and (aItem <> nil)) then
-  begin
     aItem := aItem.fGetItemByKey(aKey);
-    if (aItem = nil) then
-      Error(SItemNil, 'at item with key ' + Qot(aKey));
-  end;
+  Result := aItem;
+end;
+
+function TMcJsonItem.At(const aKey: string; aIdx: Integer): TMcJsonItem;
+var
+  aItem: TMcJsonItem;
+begin
+  // get by key
+  aItem := fGetItemByKey(aKey);
+  // get by index
+  if ((aIdx >= 0) and (aItem <> nil)) then
+    aItem := aItem.fGetItemByIdx(aIdx);
   Result := aItem;
 end;
 

@@ -44,6 +44,9 @@ begin
               and (N.Count                  = 1        )
               and (N.Key                    = ''       )
               and (N['key'].Key             = 'key'    )
+              and (N.HasKey('key')          = True     )
+              and (N.HasKey('not')          = False    )
+              and (N.HasChild               = True     )
               and (N['key'].AsString        = 'value'  )
               and (N.Keys[0]                = 'key'    )
               and (N.Items[0].AsString      = 'value'  )
@@ -624,37 +627,42 @@ begin
       end
       else if (i = 2) then
       begin
+        N.Path('s/not').AsInteger;
+        anyPass := True;
+      end
+      else if (i = 3) then
+      begin
         N['s'].Items[1].AsInteger;
         anyPass := True;
       end
       // Exception Invalid item type
-      else if (i = 3) then
+      else if (i = 4) then
       begin
         N['s'].AsObject;
         anyPass := True;
       end
       // Exception Can't convert item "%s" with value "%s" to "%s"
-      else if (i = 4) then
+      else if (i = 5) then
       begin
         N['s'].AsInteger;
         anyPass := True;
       end
       // Exception Can't convert item "%s" to "%s"
-      else if (i = 5) then
+      else if (i = 6) then
       begin
         N.AsJSON := '{"n": null}';
         N['n'].AsInteger;
         anyPass := True;
       end
       // Exception Duplicate key "%s"
-      else if (i = 6) then
+      else if (i = 7) then
       begin
         N.SpeedUp := False;
         N.AsJSON := '{"k":"v", "k":"v"}';
         anyPass := True;
       end
       // Exception Error while parsing text: "%s" at pos "%s"
-      else if (i = 7) then
+      else if (i = 8) then
       begin
         N.AsJSON := '{"n"[:null}';
         anyPass := True;
@@ -734,15 +742,51 @@ begin
   N := TMcJsonItem.Create;
   Result := True;
   try
+    // how to access a at pos 1.
+    N.AsJSON := '{"a": [1, 2, 3]}';
+    Result := Result and (N['a'].Items[1].AsInteger = 2);
+    Result := Result and (N.At('a',1).AsInteger     = 2);
+    // how to access k2 at pos 1.
     N.AsJSON := '{"a": [{"k1":1,"k2":2},{"k1":10,"k2":20}]}';
-    // how to access k2 in pos 1.
     Result := Result and (N['a'].Items[1].Values['k2'].AsInteger = 20);
     Result := Result and (N['a'].Items[1]['k2'].AsInteger        = 20);
-    Result := Result and (N['a'].At(1, 'k2').AsInteger           = 20);
+    Result := Result and (N['a'].At(1,'k2').AsInteger            = 20);
     // other uses
     N.AsJSON := '{"k1":1,"k2":2,"k3":3,"k4":4}';
-    Result := Result and (N.Items[2].AsInteger  = 3);
-    Result := Result and (N.At(2).AsInteger     = 3);
+    Result := Result and (N['k3'].AsInteger    = 3);
+    Result := Result and (N.Items[2].AsInteger = 3);
+    Result := Result and (N.At(2).AsInteger    = 3);
+    Result := Result and (N.At('k3').AsInteger = 3);
+  except
+    on E: Exception do
+    begin
+      Msg := Msg + #13#10 + sIndent + 'Error: ' + E.Message;
+      Result := False;
+    end;
+  end;
+  N.Free;
+end;
+
+function Test20(out Msg: string): Boolean;
+var
+  N, M: TMcJsonItem;
+begin
+  Msg := 'Test 20: key paths';
+  N   := TMcJsonItem.Create;
+  Result := True;
+  try
+    N.AsJSON := '{"o": {"k1":"v1", "k2":"v2"}}';
+    // get second object using path of keys.
+    M := N.Path('o/k2');
+    Result := Result and (M.AsString = 'v2');
+    M := N.Path('/o/k2');
+    Result := Result and (M.AsString = 'v2');
+    M := N.Path('o/k2/');
+    Result := Result and (M.AsString = 'v2');
+    M := N.Path('/o/k2/');
+    Result := Result and (M.AsString = 'v2');
+    M := N.Path('\o\k2\');
+    Result := Result and (M.AsString = 'v2');
   except
     on E: Exception do
     begin
@@ -822,6 +866,7 @@ begin
   Check(Test17, TotalPassed, TotalFailed);
   Check(Test18, TotalPassed, TotalFailed);
   Check(Test19, TotalPassed, TotalFailed);
+  Check(Test20, TotalPassed, TotalFailed);
 
   Check(Test99, TotalPassed, TotalFailed);
 
