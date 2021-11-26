@@ -172,6 +172,11 @@ Results in:
    }
 }
 ```
+Note that `Path()` does not accept indexes yet, like this:
+```pascal
+N.AsJSON := '{"o": [{"k1":"v1"}, {"k2":"v2"}]';
+N.Path('o[1].k2').AsString := 'value2';
+```  
 
 ### Array or object items
 Here is how to access all items (children) of a JSON object and change their value type and content.
@@ -193,19 +198,21 @@ Results in:
 
 ### Shortener for array item access
 We can use the `Items[index]` and `Values['key']` properties to access items inside objects and arrays. 
-Since version `0.9.5`, we can use the `At(index, 'key')` as a shortener.
+Since version `0.9.5`, we can use the `At(index, 'key')` or `At('key', index)` as shorteners.
 ```pascal
 N.AsJSON := '{"a": [{"k1":1,"k2":2},{"k1":10,"k2":20}]}';
 // how to access k2 of second object.
 i := N['a'].Items[1].Values['k2'].AsInteger; // i will be equal to 20
 i := N['a'].Items[1]['k2'].AsInteger;        // uses the Values[] as default property
-i := N['a'].At(1, 'k2').AsInteger;           // shortener
+i := N['a'].At(1, 'k2').AsInteger;           // shortener: index, key
+i := N.At('a', 1)['k2'].AsInteger;           // shortener: key, index
 ```
 And there are other uses without the `key` parameter:
 ```pascal
 N.AsJSON := '{"k1":1,"k2":2,"k3":3,"k4":4}';
 i := N.Items[2].AsInteger; // i will be equal to 3
-i := N.At(2).AsInteger;    // shortener
+i := N.At(2).AsInteger;    // shortener: just index
+i := N.At('k3').AsInteger; // shortener: just key
 ```
 
 ### Enumerate
