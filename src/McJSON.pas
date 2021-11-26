@@ -120,6 +120,7 @@ type
     property AsNull   : string      read fGetAsNull    write fSetAsNull   ;
 
     constructor Create; overload;
+    constructor Create(aJItemType: TJItemType); overload;
     constructor Create(const aItem: TMcJsonItem); overload;
     constructor Create(const aCode: string); overload;
     destructor  Destroy; override;
@@ -182,10 +183,12 @@ type
   // Auxiliary functions
   function GetItemTypeStr(aType: TJItemType): string;
   function GetValueTypeStr(aType: TJValueType): string;
+  function UnEscapeUnicode(const aStr: string): string;
+  function CheckIsUtf8(const aStr: AnsiString; out aAux: AnsiString): Boolean;
 
 implementation
 
-const C_MCJSON_VERSION = '1.0.0';
+const C_MCJSON_VERSION = '1.0.1';
 const C_EMPTY_KEY      = '__a3mptyStr__';
 
 resourcestring
@@ -204,7 +207,7 @@ const
   SIGNS:      set of char = ['+', '-'];
   CLOSES:     set of char = ['}', ']'];
   HEXA:       set of char = ['0'..'9', 'A'..'F', 'a'..'f'];
-  PATHSEPS:   set of char = ['\', '/'];
+  PATHSEPS:   set of char = ['\', '/', '.'];
 
 { ---------------------------------------------------------------------------- }
 { Auxiliary private functions }
@@ -294,8 +297,8 @@ begin
       end;
     end;
   end;
-  if (j > 1)
-    then SetLength(sRes, j-1);
+  if (j > 1) then
+    SetLength(sRes, j-1);
   // result
   Result := sRes;
 end;
@@ -1074,6 +1077,13 @@ begin
   fSpeedUp := True;
 end;
 
+constructor TMcJsonItem.Create(aJItemType: TJItemType);
+begin
+  inherited Create;
+  Create;
+  Self.ItemType := aJItemType;
+end;
+
 constructor TMcJsonItem.Create(const aItem: TMcJsonItem);
 begin
   inherited Create;
@@ -1423,15 +1433,15 @@ end;
 
 procedure TMcJsonItem.LoadFromStream(Stream: TStream; aUTF8: Boolean);
 var
-  sCode: AnsiString;
+  sCode, sAux: AnsiString;
   len  : Int64;
 begin
   len   := Stream.Size - Stream.Position;
   sCode := '';
   SetLength(sCode, len);
   Stream.Read(Pointer(sCode)^, len);
-  if aUTF8
-    then Self.AsJSON := Utf8ToAnsi(sCode)
+  if (aUTF8 and CheckIsUtf8(sCode, sAux))
+    then Self.AsJSON := sAux
     else Self.AsJSON := sCode;
 end;
 
@@ -1564,6 +1574,71 @@ begin
     jvtBoolean: Result := 'boolean';
     jvtNull   : Result := 'null'   ;
   end;
+end;
+
+function UnEscapeUnicode(const aStr: string): string;
+var
+  cs, cd, len: Integer;
+  ans: string;
+begin
+  cs  := 1; // char in source
+  cd  := 1; // char in destiny
+  len := Length(aStr);
+  SetLength(ans, len);
+  while (cs <= len) do
+  begin
+    // no escape, copy and move on
+    if (aStr[cs] <> '\') then
+    begin
+      ans[cd] := aStr[cs];
+      Inc(cs);
+      Inc(cd);
+    end
+    else
+    begin
+      // u+(4 hexa) escape
+      if (cs < len) and (aStr[cs+1] = 'u') then
+      begin
+        if (len-cs-1   >  4   ) and
+           (aStr[cs+2] in HEXA) and (aStr[cs+3] in HEXA) and
+           (aStr[cs+4] in HEXA) and (aStr[cs+5] in HEXA) then
+        begin
+          try
+            try
+              ans[cd] := Chr( StrToInt('$' + Copy(aStr, cs+2, 4)) );
+              Inc(cd);
+            except
+              ; // invalid hexa, ignore and move on
+            end;
+          finally
+            Inc(cs, 6); // \uXXXX
+          end;
+        end;
+      end
+      // ignore other escapes
+      else
+        Inc(cs, 2);
+    end;
+  end;
+  // trim extra size
+  cd := Pos(#0, ans);
+  SetLength(ans, cd-1);
+  // return the string unescaped
+  Result := ans;
+end;
+
+function CheckIsUtf8(const aStr: AnsiString; out aAux: AnsiString): Boolean;
+var
+  len : Integer;
+begin
+  len := Length(aStr);
+  // convert to Ansi (if Utf8, will lead to length zero)
+  try
+    aAux := Utf8ToAnsi(aStr);
+  except
+    ; // ignore
+  end;
+  Result := (len > 0) and (Length(aAux) <> 0);
 end;
 
 end.

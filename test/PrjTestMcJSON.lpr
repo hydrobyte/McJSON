@@ -2,7 +2,9 @@ program PrjTestMcJSON;
 
 {.$mode objfpc}
 {$mode delphi}
+
 {$H+}
+{$codepage cp1252}
 
 uses
   Classes,
@@ -14,7 +16,7 @@ type
   TTest = function(out Msg: string): Boolean;
 
 var
-  s, sIndent: string;
+  sIndent: string;
 
 procedure Check(Test: TTest; var Passed, Failed: Integer);
 var
@@ -243,7 +245,6 @@ begin
   N := TMcJsonItem.Create;
   try
     N.AsJSON := '{ "i": 123, "f": 123.456, "s": "abc", "b": True, "n": Null }';
-    s := N.ToString(true);
     // changes
     N['i'].AsInteger := 321;
     N['f'].AsNumber  := 456.123;
@@ -297,12 +298,17 @@ end;
 function Test09(out Msg: string): Boolean;
 var
   N: TMcJsonItem;
+  S: string;
 begin
   Msg := 'Test 09: escapes';
   N := TMcJsonItem.Create;
+  Result := True;
   try
     N.AsJSON := '{ "k": "\b\t\n\f\r\u05d1 \" \\ \/"}';
-    Result   := (N['k'].AsString = '\b\t\n\f\r\u05d1 \" \\ \/');
+    Result := Result and (N['k'].AsString = '\b\t\n\f\r\u05d1 \" \\ \/');
+    // unescape function
+    S := UnEscapeUnicode('a\u00e7b\t\nc');
+    Result := Result and (S = 'açbc');
   except
     on E: Exception do
     begin
@@ -524,6 +530,9 @@ begin
     // check before and after delete
     Result := Result and (N.AsJSON = '{"i":123}'                                  )
                      and (M.AsJSON = '{"i":123,"array":[{"k1":"ç1"},{"k2":"ç2"}]}');
+    // load a Ansi file (especifying it)
+    M.LoadFromFile('test13-Ansi.json', false);
+    Result := Result and (M['ansi'].AsString = 'ãçüö');
     // load a UTF-8 file
     M.LoadFromFile('test13-UTF8.json');
     Result := Result and (M['utf8'].AsString = 'ãçüö');
@@ -540,17 +549,23 @@ end;
 
 function Test14(out Msg: string): Boolean;
 var
-  N, M, P: TMcJsonItem;
+  N, M, P, Q: TMcJsonItem;
 begin
   Msg := 'Test 14: constructors';
   N := nil;
   M := nil;
   P := nil;
+  Q := nil;
   try
     Result := True;
     // constructor empty
     N := TMcJsonItem.Create();
     Result := Result and (N.AsJSON = '');
+    // constructor by type
+    Q := TMcJsonItem.Create(jitArray);
+    Q.Add.AsInteger := 1;
+    Q.Add.AsInteger := 2;
+    Result := Result and (Q.AsJSON = '[1,2]');
     // constructor by code
     M := TMcJsonItem.Create('{"i": 123}');
     Result := Result and (M.AsJSON = '{"i":123}');
@@ -568,6 +583,7 @@ begin
   N.Free;
   M.Free;
   P.Free;
+  Q.Free;
 end;
 
 function Test15(out Msg: string): Boolean;
@@ -786,6 +802,8 @@ begin
     M := N.Path('/o/k2/');
     Result := Result and (M.AsString = 'v2');
     M := N.Path('\o\k2\');
+    Result := Result and (M.AsString = 'v2');
+    M := N.Path('o.k2');
     Result := Result and (M.AsString = 'v2');
   except
     on E: Exception do

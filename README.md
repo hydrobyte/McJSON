@@ -157,11 +157,11 @@ Answer := N.Check( '{"i":[123}' );
 ```
 
 ### Paths
-`McJSON` allows a simple way to access items through paths. We can use '/' or '\' as path separators.
+`McJSON` allows a simple way to access items through paths. We can use '/', '\\' or '.' as path separators.
 ```pascal
 N.AsJSON := '{"o": {"k1":"v1", "k2":"v2"}}';
 // access and change second object's value
-N.Path('o/k2').AsString := 'value2';
+N.Path('o.k2').AsString := 'value2';
 ```  
 Results in:
 ```json
@@ -424,6 +424,9 @@ The `SaveToFile` method will write using UTF-8 encoding.
 ## Known issues
 The world is not perfect and neither am I.
 Here are some known issues:
+* Function `UnEscapeUnicode()` is not working with Lazarus (FPC).
+* In Lazarus, `Test13` needs `M.LoadFromFile('test13-Ansi.json', false);` in order to work with ANSI encoded file.
+* In RAD 2009 and later, function `CheckIsUtf8()` is not working properly. So, ANSI files need do be specified.
 * Trying to follow and confirm the [specification](https://www.json.org/json-en.html) using [JSONLint](https://jsonlint.com/).
 
 ## Performance tests
