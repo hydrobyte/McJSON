@@ -338,6 +338,7 @@ begin
     StrL.Add('bad value: not number 3'   +'='+ '{"k":1234E}'          );
     StrL.Add('bad value: not number 4'   +'='+ '{"k":1234E+-1}'       );
     StrL.Add('bad value: not number 5'   +'='+ '{"k":1234E+a}'        );
+    StrL.Add('bad value: not number 6'   +'='+ '{"k":1,234}'          );
     StrL.Add('bad value: leading 0s 1'   +'='+ '{"k":01234}'          );
     StrL.Add('bad value: leading 0s 2'   +'='+ '{"k":00004}'          );
     StrL.Add('bad value: invalid'        +'='+ '{"k":"v"a}'           );

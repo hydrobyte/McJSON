@@ -94,6 +94,8 @@ type
     function sFormat(aHuman: Boolean): string;
     function sFormatItem(aStrS: TStringStream; const aIn, aNL, aSp: string): string;
     function isIndexValid(aIdx: Integer): Boolean;
+    function InternalFloatToStr(aValue: Extended): string;
+    function InternalStrToFloat(const aStr: string): Extended;
 
   public
     property Count   : Integer    read fGetCount;
@@ -188,7 +190,7 @@ type
 
 implementation
 
-const C_MCJSON_VERSION = '1.0.2';
+const C_MCJSON_VERSION = '1.0.3';
 const C_EMPTY_KEY      = '__a3mptyStr__';
 
 resourcestring
@@ -434,9 +436,9 @@ begin
   // try to convert
   try
     case fValType of
-      jvtNumber : Ans := StrToFloat(fValue);       // expected
-      jvtString : Ans := StrToFloat(fValue);       // convertion
-      jvtBoolean: Ans := Integer(fValue = 'true'); // convertion
+      jvtNumber : Ans := InternalStrToFloat(fValue); // expected
+      jvtString : Ans := InternalStrToFloat(fValue); // convertion
+      jvtBoolean: Ans := Integer(fValue = 'true');   // convertion
       else        Aux := -1;
     end;
   except
@@ -601,7 +603,7 @@ begin
   begin
     if (fValType <> jvtNumber) then fValType := jvtNumber;
     // set aValue as string
-    fValue := FloatToStr(aValue);
+    fValue := InternalFloatToStr(aValue);
   end;
 end;
 
@@ -1061,6 +1063,32 @@ begin
     then Ans := (AIdx  = 0)
     else Ans := (AIdx >= 0) and (AIdx < fChild.Count);
   Result := Ans;
+end;
+
+function TMcJsonItem.InternalFloatToStr(aValue: Extended): string;
+var
+  Fmt: TFormatSettings;
+begin
+  // internally, use "." as Decimal Separator.
+  Fmt.DecimalSeparator := '.';
+  try
+    Result := FloatToStr(aValue, Fmt);
+  except
+    Result := '';
+  end;
+end;
+
+function TMcJsonItem.InternalStrToFloat(const aStr: string): Extended;
+var
+  Fmt: TFormatSettings;
+begin
+  // internally, use "." as Decimal Separator.
+  Fmt.DecimalSeparator := '.';
+  try
+    Result := StrToFloat(aStr, Fmt);
+  except
+    raise;
+  end;
 end;
 
 { ---------------------------------------------------------------------------- }
