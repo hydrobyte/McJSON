@@ -64,6 +64,15 @@ type
     function fGetAsString : string     ;
     function fGetAsBoolean: Boolean    ;
     function fGetAsNull   : string     ;
+    // shortener getters
+    function fGetJSON   (const aKey: string): string     ;
+    function fGetObject (const aKey: string): TMcJsonItem;
+    function fGetArray  (const aKey: string): TMcJsonItem;
+    function fGetInteger(const aKey: string): Integer    ;
+    function fGetDouble (const aKey: string): Double     ;
+    function fGetString (const aKey: string): string     ;
+    function fGetBoolean(const aKey: string): Boolean    ;
+    function fGetNull   (const aKey: string): string     ;
 
     // property setters
     procedure fSetType(aType: TJItemType);
@@ -76,6 +85,15 @@ type
     procedure fSetAsString (aValue: string     );
     procedure fSetAsBoolean(aValue: Boolean    );
     procedure fSetAsNull   (aValue: string     );
+    // shortener setters
+    procedure fSetJSON   (const aKey: string; aValue: string     );
+    procedure fSetObject (const aKey: string; aValue: TMcJsonItem);
+    procedure fSetArray  (const aKey: string; aValue: TMcJsonItem);
+    procedure fSetInteger(const aKey: string; aValue: Integer    );
+    procedure fSetDouble (const aKey: string; aValue: Double     );
+    procedure fSetString (const aKey: string; aValue: string     );
+    procedure fSetBoolean(const aKey: string; aValue: Boolean    );
+    procedure fSetNull   (const aKey: string; aValue: string     );
 
     // string single-pass parser
     function parse(const aCode: string; aPos, aLen: Integer): Integer;
@@ -108,7 +126,15 @@ type
     property HasChild: Boolean read fHasChild;
     property IsNull  : Boolean read fIsNull;
     property SpeedUp : Boolean read fSpeedUp write fSpeedUp;
-
+    // shorteners properties
+    property J[const aKey: string]: string      read fGetJSON    write fSetJSON   ;
+    property O[const aKey: string]: TMcJsonItem read fGetObject  write fSetObject ;
+    property A[const aKey: string]: TMcJsonItem read fGetArray   write fSetArray  ;
+    property I[const aKey: string]: Integer     read fGetInteger write fSetInteger;
+    property D[const aKey: string]: Double      read fGetDouble  write fSetDouble ;
+    property S[const aKey: string]: string      read fGetString  write fSetString ;
+    property B[const aKey: string]: Boolean     read fGetBoolean write fSetBoolean;
+    property N[const aKey: string]: string      read fGetNull    write fSetNull   ;
     // AsSomething properties
     property AsJSON   : string      read fGetAsJSON    write fSetAsJSON   ;
     property AsObject : TMcJsonItem read fGetAsObject  write fSetAsObject ;
@@ -493,6 +519,63 @@ begin
   Result := fValue;
 end;
 
+// shortener getters
+function TMcJsonItem.fGetJSON(const aKey: string): string;
+begin
+  if ( not HasKey(aKey) )
+    then Result := Self.Add(aKey, jitObject).AsJSON
+    else Result := Self[aKey].AsJSON;
+end;
+
+function TMcJsonItem.fGetObject(const aKey: string): TMcJsonItem;
+begin
+  if ( not HasKey(aKey) )
+    then Result := Self.Add(aKey, jitObject).AsObject
+    else Result := Self[aKey].AsObject;
+end;
+
+function TMcJsonItem.fGetArray(const aKey: string): TMcJsonItem;
+begin
+  if ( not HasKey(aKey) )
+    then Result := Self.Add(aKey, jitArray).AsArray
+    else Result := Self[aKey].AsArray;
+end;
+
+function TMcJsonItem.fGetInteger(const aKey: string): Integer;
+begin
+  if ( not HasKey(aKey) )
+    then Result := Self.Add(aKey, jitValue).AsInteger
+    else Result := Self[aKey].AsInteger;
+end;
+
+function TMcJsonItem.fGetDouble(const aKey: string): Double;
+begin
+  if ( not HasKey(aKey) )
+    then Result := Self.Add(aKey, jitValue).AsNumber
+    else Result := Self[aKey].AsNumber;
+end;
+
+function TMcJsonItem.fGetString(const aKey: string): string;
+begin
+  if ( not HasKey(aKey) )
+    then Result := Self.Add(aKey, jitValue).AsString
+    else Result := Self[aKey].AsString;
+end;
+
+function TMcJsonItem.fGetBoolean(const aKey: string): Boolean;
+begin
+  if ( not HasKey(aKey) )
+    then Result := Self.Add(aKey, jitValue).AsBoolean
+    else Result := Self[aKey].AsBoolean;
+end;
+
+function TMcJsonItem.fGetNull(const aKey: string): string;
+begin
+  if ( not HasKey(aKey) )
+    then Result := Self.Add(aKey, jitValue).AsNull
+    else Result := Self[aKey].AsNull;
+end;
+
 procedure TMcJsonItem.fSetType(aType: TJItemType);
 var
   k: Integer;
@@ -668,6 +751,63 @@ begin
     // set aValue as string
     fValue := 'null'; // ignore aValue
   end;
+end;
+
+// shortener setters
+procedure TMcJsonItem.fSetJSON(const aKey: string; aValue: string);
+begin
+  if ( not HasKey(aKey) )
+    then Self.Add(aKey).AsJSON := aValue
+    else Self[aKey].AsJSON     := aValue;
+end;
+
+procedure TMcJsonItem.fSetObject(const aKey: string; aValue: TMcJsonItem);
+begin
+  if ( not HasKey(aKey) )
+    then Self.Add(aKey).AsObject := aValue
+    else Self[aKey].AsObject     := aValue;
+end;
+
+procedure TMcJsonItem.fSetArray(const aKey: string; aValue: TMcJsonItem);
+begin
+  if ( not HasKey(aKey) )
+    then Self.Add(aKey).AsArray := aValue
+    else Self[aKey].AsArray     := aValue;
+end;
+
+procedure TMcJsonItem.fSetInteger(const aKey: string; aValue: Integer);
+begin
+  if ( not HasKey(aKey) )
+    then Self.Add(aKey).AsInteger := aValue
+    else Self[aKey].AsInteger     := aValue;
+end;
+
+procedure TMcJsonItem.fSetDouble(const aKey: string; aValue: Double);
+begin
+  if ( not HasKey(aKey) )
+    then Self.Add(aKey).AsNumber := aValue
+    else Self[aKey].AsNumber     := aValue;
+end;
+
+procedure TMcJsonItem.fSetString(const aKey: string; aValue: string);
+begin
+  if ( not HasKey(aKey) )
+    then Self.Add(aKey).AsString := aValue
+    else Self[aKey].AsString     := aValue;
+end;
+
+procedure TMcJsonItem.fSetBoolean(const aKey: string; aValue: Boolean);
+begin
+  if ( not HasKey(aKey) )
+    then Self.Add(aKey).AsBoolean := aValue
+    else Self[aKey].AsBoolean     := aValue;
+end;
+
+procedure TMcJsonItem.fSetNull(const aKey: string; aValue: string);
+begin
+  if ( not HasKey(aKey) )
+    then Self.Add(aKey).AsNull := aValue
+    else Self[aKey].AsNull     := aValue;
 end;
 
 function TMcJsonItem.parse(const aCode: string; aPos, aLen: Integer): Integer;

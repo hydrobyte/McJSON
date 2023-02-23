@@ -728,20 +728,18 @@ begin
   Msg := 'Test 18: example like JsonDataObjects';
   Obj := TMcJsonItem.Create;
   try
-    // access (no automatic creation as in JDO)
-    Obj.Add('foo').AsString := 'bar';
-    Obj.Add('bar').AsString := 'foo';
+    // access (automatic creation as in JDO)
+    Obj.S['foo'] := 'bar';
+    Obj.S['bar'] := 'foo';
     // array creation, Obj is the owner of 'array'
-    Obj.Add('array', jitArray);
-    Obj['array'].Add.AsInteger := 10;
-    Obj['array'].Add.AsInteger := 20;
+    Obj.A['array'].Add.AsInteger := 10;
+    Obj.A['array'].Add.AsInteger := 20;
     // object creation, 'array' is the owner of ChildObj
     ChildObj := Obj['array'].Add(jitObject);
-    ChildObj.Add('value').AsNumber := 12.3;
+    ChildObj.D['value'] := 12.3;
     // array creation, ChildObj is the owner of 'subarray'
-    ChildObj.Add('subarray', jitArray);
-    ChildObj['subarray'].Add.AsInteger := 100;
-    ChildObj['subarray'].Add.AsInteger := 200;
+    ChildObj.A['subarray'].Add.AsInteger := 100;
+    ChildObj.A['subarray'].Add.AsInteger := 200;
     Result := (Obj.AsJSON = '{"foo":"bar","bar":"foo","array":[10,20,{"value":12.3,"subarray":[100,200]}]}');
   except
     on E: Exception do
