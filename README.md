@@ -153,7 +153,7 @@ If you want to check if a JSON string is valid:
 ```pascal
 Answer := N.Check( '{"i":[123}' ); 
 // Answer will be false due to exception:
-// Error while parsing text: "expected , got } at pos "10"
+// Error while parsing text: "expected , got }" at pos "10"
 ```
 
 ### Paths
@@ -431,7 +431,7 @@ The `SaveToFile` method will write using UTF-8 encoding.
 ## Known issues
 The world is not perfect and neither am I.
 Here are some known issues:
-* Function `UnEscapeUnicode()` is not working with Lazarus (FPC).
+* `McJSON` has not "Region awereness", so check if your Decimal Separator is "." as JSON expects.
 * In Lazarus, `Test13` needs `M.LoadFromFile('test13-Ansi.json', false);` in order to work with ANSI encoded file.
 * In RAD 2009 and later, function `CheckIsUtf8()` is not working properly. So, ANSI files need do be specified.
 * Trying to follow and confirm the [specification](https://www.json.org/json-en.html) using [JSONLint](https://jsonlint.com/).

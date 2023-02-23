@@ -1143,7 +1143,7 @@ end;
 
 function TMcJsonItem.Path(const aPath: string): TMcJsonItem;
 
-  function GetKeyByPath(const aPath: string; out aPos, aLen: Integer): string;
+  function GetKeyByPath(const aPath: string; var aPos, aLen: Integer): string;
   var
     c: Integer;
   begin
