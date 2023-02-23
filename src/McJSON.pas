@@ -1,27 +1,27 @@
-﻿(*****************************************************************************
+﻿(*******************************************************************************
 
-The MIT License (MIT)
+  The MIT License (MIT)
 
-Copyright (c) 2021 HydroByte Software
+  Copyright (c) 2021 - 2023,  HydroByte Software
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to deal
+  in the Software without restriction, including without limitation the rights
+  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+  The above copyright notice and this permission notice shall be included in all
+  copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-*****************************************************************************)
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+  SOFTWARE.
+*******************************************************************************)
 
 unit McJSON;
 
@@ -184,11 +184,11 @@ type
   function GetItemTypeStr(aType: TJItemType): string;
   function GetValueTypeStr(aType: TJValueType): string;
   function UnEscapeUnicode(const aStr: string): string;
-  function CheckIsUtf8(const aStr: AnsiString; out aAux: AnsiString): Boolean;
+  function CheckIsUtf8(const aStr: string; out aAux: string): Boolean;
 
 implementation
 
-const C_MCJSON_VERSION = '1.0.1';
+const C_MCJSON_VERSION = '1.0.2';
 const C_EMPTY_KEY      = '__a3mptyStr__';
 
 resourcestring
@@ -272,6 +272,7 @@ begin
   i := 1;
   j := 1;
   len := Length(aStr);
+  sRes := '';
   SetLength(sRes, len);
   opn := false;
 
@@ -494,7 +495,7 @@ end;
 
 procedure TMcJsonItem.fSetType(aType: TJItemType);
 var
-  i: Integer;
+  k: Integer;
 begin
   if (Self = nil) then Error(SItemNil, 'set type');
   // if an array or object is converted to a number, clear all descendants
@@ -512,14 +513,14 @@ begin
   // if the array is converted into an object, then assign keys to all its elements
   else if (aType = jitObject) and (fType = jitArray) then
   begin
-    for i := 0 to (fChild.Count - 1) do
-      TMcJsonItem(fChild[i]).fKey := IntToStr(i);
+    for k := 0 to (fChild.Count - 1) do
+      TMcJsonItem(fChild[k]).fKey := IntToStr(k);
   end
   // if an object is converted into an array, then remove the keys from its descendants
   else if (aType = jitArray) and (fType = jitObject) then
   begin
-    for i := 0 to (fChild.Count - 1) do
-      TMcJsonItem(fChild[i]).fKey := '';
+    for k := 0 to (fChild.Count - 1) do
+      TMcJsonItem(fChild[k]).fKey := '';
   end;
   // return aked type
   fType := aType;
@@ -564,7 +565,7 @@ end;
 
 procedure TMcJsonItem.fSetAsInteger(aValue: Integer);
 var
-  i: Integer;
+  k: Integer;
 begin
   if (Self  = nil     ) then Error(SItemNil, 'set as integer');
   // if unset, set as value
@@ -572,8 +573,8 @@ begin
   // if container, set aValue for each child
   if (fType = jitArray) or (fType = jitObject) then
   begin
-     for i := 0 to (fChild.Count - 1) do
-       TMcJsonItem(fChild[i]).AsInteger := aValue;
+    for k := 0 to (fChild.Count - 1) do
+      TMcJsonItem(fChild[k]).AsInteger := aValue;
   end
   else
   begin
@@ -585,7 +586,7 @@ end;
 
 procedure TMcJsonItem.fSetAsDouble(aValue: Double);
 var
-  i: Integer;
+  k: Integer;
 begin
   if (Self  = nil     ) then Error(SItemNil, 'set as double');
   // if unset, set as value
@@ -593,8 +594,8 @@ begin
   // if container, set aValue for each child
   if (fType = jitArray) or (fType = jitObject) then
   begin
-     for i := 0 to (fChild.Count - 1) do
-       TMcJsonItem(fChild[i]).AsNumber := aValue;
+    for k := 0 to (fChild.Count - 1) do
+      TMcJsonItem(fChild[k]).AsNumber := aValue;
   end
   else
   begin
@@ -606,7 +607,7 @@ end;
 
 procedure TMcJsonItem.fSetAsString(aValue: string);
 var
-  i: Integer;
+  k: Integer;
 begin
   if (Self  = nil     ) then Error(SItemNil, 'set as string');
   // if unset, set as value
@@ -614,8 +615,8 @@ begin
   // if container, set aValue for each child
   if (fType = jitArray) or (fType = jitObject) then
   begin
-     for i := 0 to (fChild.Count - 1) do
-       TMcJsonItem(fChild[i]).AsString := aValue;
+    for k := 0 to (fChild.Count - 1) do
+      TMcJsonItem(fChild[k]).AsString := aValue;
   end
   else
   begin
@@ -627,7 +628,7 @@ end;
 
 procedure TMcJsonItem.fSetAsBoolean(aValue: Boolean);
 var
-  i: Integer;
+  k: Integer;
 begin
   if (Self  = nil     ) then Error(SItemNil, 'set as boolean');
   // if unset, set as value
@@ -635,8 +636,8 @@ begin
   // if container, set aValue for each child
   if (fType = jitArray) or (fType = jitObject) then
   begin
-     for i := 0 to (fChild.Count - 1) do
-       TMcJsonItem(fChild[i]).AsBoolean := aValue;
+    for k := 0 to (fChild.Count - 1) do
+      TMcJsonItem(fChild[k]).AsBoolean := aValue;
   end
   else
   begin
@@ -650,7 +651,7 @@ end;
 
 procedure TMcJsonItem.fSetAsNull(aValue: string);
 var
-  i: Integer;
+  k: Integer;
 begin
   if (Self  = nil     ) then Error(SItemNil, 'set as null');
   // if unset, set as value
@@ -658,8 +659,8 @@ begin
   // if container, set aValue for each child
   if (fType = jitArray) or (fType = jitObject) then
   begin
-     for i := 0 to (fChild.Count - 1) do
-       TMcJsonItem(fChild[i]).AsNull := 'null'; // ignore aValue
+    for k := 0 to (fChild.Count - 1) do
+      TMcJsonItem(fChild[k]).AsNull := 'null'; // ignore aValue
   end
   else
   begin
@@ -922,11 +923,9 @@ end;
 function TMcJsonItem.readBoolean(const aCode: string; aPos, aLen: Integer): Integer;
 var
   c: Integer;
-  sAux: string;
 begin
   // we got here because current symbol was 't/T' or 'f/F'
-  c    := aPos;
-  sAux := '';
+  c := aPos;
   // check boolean value 'true'
   if (aCode[aPos] = 't') or
      (aCode[aPos] = 'T') then
@@ -951,11 +950,9 @@ end;
 function TMcJsonItem.readNull(const aCode: string; aPos, aLen: Integer): Integer;
 var
   c: Integer;
-  sAux: string;
 begin
   // we got here because current symbol was 'n/N'
-  c    := aPos;
-  sAux := '';
+  c := aPos;
   // check if null
   if (aCode[aPos] = 'n') or
      (aCode[aPos] = 'N') then
@@ -996,7 +993,7 @@ end;
 
 function TMcJsonItem.sFormatItem(aStrS: TStringStream; const aIn, aNL, aSp: string): string;
 var
-  i, len: Integer;
+  k, len: Integer;
   sGoIn: string;
 begin
   Result := '';
@@ -1016,11 +1013,11 @@ begin
       // use aSp to define if aHuman is true.
       if (aSp <> ':') then sGoIn := aIn + '  ';
       // mount recursively
-      for i := 0 to len do
+      for k := 0 to len do
       begin
         aStrS.WriteString(sGoIn);
-        aStrS.WriteString(TMcJsonItem(fChild[i]).sFormatItem(aStrS, sGoIn, aNL, aSP) );
-        if ( i < len ) then
+        aStrS.WriteString(TMcJsonItem(fChild[k]).sFormatItem(aStrS, sGoIn, aNL, aSP) );
+        if ( k < len ) then
           aStrS.WriteString(',' + aNL);
       end;
       aStrS.WriteString(aNL + aIn + '}');
@@ -1035,11 +1032,11 @@ begin
       // use aSp to define if aHuman is true.
       if (aSp <> ':') then sGoIn := aIn + '  ';
       // mount recursively
-      for i := 0 to len do
+      for k := 0 to len do
       begin
         aStrS.WriteString(sGoIn);
-        aStrS.WriteString(TMcJsonItem(fChild[i]).SFormatItem(aStrS, sGoIn, aNL, aSP) );
-        if ( i < len ) then
+        aStrS.WriteString(TMcJsonItem(fChild[k]).SFormatItem(aStrS, sGoIn, aNL, aSP) );
+        if ( k < len ) then
           aStrS.WriteString(','+ aNL);
       end;
       aStrS.WriteString(aNL + aIn + ']');
@@ -1111,30 +1108,30 @@ end;
 
 procedure TMcJsonItem.Clear;
 var
-  i: Integer;
+  k: Integer;
 begin
   if (Self = nil) then Error(SItemNil, 'clear');
   // free memory of all children (will be recursive)
-  for i := 0 to (fChild.Count - 1) do
-    TMcJsonItem(fChild[i]).Free;
+  for k := 0 to (fChild.Count - 1) do
+    TMcJsonItem(fChild[k]).Free;
   // clear list
   fChild.Clear;
 end;
 
 function TMcJsonItem.IndexOf(const aKey: string): Integer;
 var
-  i, idx: Integer;
+  k, idx: Integer;
 begin
   idx    := -1;
   Result := idx;
   // check
-  if  (Self = nil) then Error(SItemNil, 'index of');
+  if (Self = nil) then Error(SItemNil, 'index of');
   // looking for an element
-  for i := 0 to (fChild.Count - 1) do
+  for k := 0 to (fChild.Count - 1) do
   begin
-    if (TMcJsonItem(fChild[i]).fKey = aKey) then
+    if (TMcJsonItem(fChild[k]).fKey = aKey) then
     begin
-      idx := i;
+      idx := k;
       Break;
     end;
   end;
@@ -1579,11 +1576,14 @@ end;
 function UnEscapeUnicode(const aStr: string): string;
 var
   cs, cd, len: Integer;
+  ndTrim: Boolean;
   ans: string;
 begin
   cs  := 1; // char in source
   cd  := 1; // char in destiny
+  ndTrim := False; // need trim
   len := Length(aStr);
+  ans := '';
   SetLength(ans, len);
   while (cs <= len) do
   begin
@@ -1596,10 +1596,11 @@ begin
     end
     else
     begin
+      ndTrim := True;
       // u+(4 hexa) escape
       if (cs < len) and (aStr[cs+1] = 'u') then
       begin
-        if (len-cs-1   >  4   ) and
+        if (len-cs-1   >= 4   ) and
            (aStr[cs+2] in HEXA) and (aStr[cs+3] in HEXA) and
            (aStr[cs+4] in HEXA) and (aStr[cs+5] in HEXA) then
         begin
@@ -1621,13 +1622,13 @@ begin
     end;
   end;
   // trim extra size
-  cd := Pos(#0, ans);
-  SetLength(ans, cd-1);
+  if (ndTrim) then
+    SetLength(ans, cd-1);
   // return the string unescaped
   Result := ans;
 end;
 
-function CheckIsUtf8(const aStr: AnsiString; out aAux: AnsiString): Boolean;
+function CheckIsUtf8(const aStr: string; out aAux: string): Boolean;
 var
   len : Integer;
 begin

@@ -153,7 +153,7 @@ If you want to check if a JSON string is valid:
 ```pascal
 Answer := N.Check( '{"i":[123}' ); 
 // Answer will be false due to exception:
-// Error while parsing text: "expected , got }" at pos "10"
+// Error while parsing text: "expected , got } at pos "10"
 ```
 
 ### Paths
@@ -488,7 +488,7 @@ Library    | Generate  | Save     | Parse    | Load     | Access  | Total      |
 
 ### Notes about `uJSON`
 * Less verbosy in C++ than `LkJson`, but the colection of classes also will force casting with `dynamic_cast`.
-* Uses TStringList as a "Hash Map" [string] -> [object address]. The comas here is because I think the string entry is not a true hash within TStringList.
+* Uses TStringList as a "Hash Map" [string] -> [object address]. The quotation marks here is because I think the string entry is not a true hash within TStringList.
 * In some aspectes, the methods interface might became puzzling.
 * It needs a performance review.
 * With `uJSON`, there seems to be a performance problem related to `toString()`.

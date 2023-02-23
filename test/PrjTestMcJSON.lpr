@@ -71,9 +71,10 @@ begin
   N := TMcJsonItem.Create;
   try
     N.AsJSON := '{ "array": [1, 2.0, "3"] }';
-    Result   :=   (N.ItemType                     = jitObject)
-              and (N.Count                        = 1        )
+    Result   :=   (N.Count                        = 1        )
+              and (N.ItemType                     = jitObject)
               and (N['array'].ItemType            = jitArray )
+              and (N['array'].Items[0].ItemType   = jitValue )
               and (N['array'].Count               = 3        )
               and (N['array'].Key                 = 'array'  )
               and (N['array'].Items[1].AsString   = '2.0'    )
@@ -100,6 +101,8 @@ begin
               and (N.Count                              = 1        )
               and (N['sub'].ItemType                    = jitArray )
               and (N['sub'].Count                       = 2        )
+              and (N.HasKey('sub')                      = True     )
+              and (N.HasKey('not')                      = False    )
               and (N['sub'].Key                         = 'sub'    )
               and (N['sub'].Items[1]['key2'].Key        = 'key2'   )
               and (N['sub'].Items[1]['key2'].AsInteger  = 2        );
@@ -307,8 +310,8 @@ begin
     N.AsJSON := '{ "k": "\b\t\n\f\r\u05d1 \" \\ \/"}';
     Result := Result and (N['k'].AsString = '\b\t\n\f\r\u05d1 \" \\ \/');
     // unescape function
-    S := UnEscapeUnicode('a\u00e7b\t\nc');
-    Result := Result and (S = 'açbc');
+    S := UnEscapeUnicode('aB\t\n\u00e7d\u00e7');
+    Result := Result and (S = 'aBçdç');
   except
     on E: Exception do
     begin
