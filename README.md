@@ -427,6 +427,7 @@ Error while parsing text: "line break" at pos "14"
 ### Load from and Save to Files
 `McJSON` can load from ASCII and UTF-8 files (without BOM). See `LoadFromFile` method.
 The `SaveToFile` method will write using UTF-8 encoding.
+*Note*: since vertion 1.0.4, the test project's source code in Lazarus was converted to UTF-8, so the `asUTF8` parameter was set to `false`.
 
 ## Known issues
 The world is not perfect and neither am I.

@@ -305,7 +305,7 @@ begin
     N.AsJSON := '{ "k": "\b\t\n\f\r\u05d1 \" \\ \/"}';
     Result := Result and (N['k'].AsString = '\b\t\n\f\r\u05d1 \" \\ \/');
     // unescape function
-    S := UnEscapeUnicode('aB\t\n\u00e7d\u00e7');
+    S := UnEscapeUnicode('aB\t\n\u00e7d\u00e7'); // debug sees 'ç'
     Result := Result and (S = 'aBçdç');
   except
     on E: Exception do
@@ -524,15 +524,15 @@ begin
     idx := N.IndexOf('array');
     if (idx >= 0) then
       N.Delete(idx);
-    // load from file (UTF-8 by default)
+    // load from file (default UTF-8 convertion)
     M.LoadFromFile('test13.json');
     // check before and after delete
     Result := Result and (N.AsJSON = '{"i":123}'                                  )
                      and (M.AsJSON = '{"i":123,"array":[{"k1":"ç1"},{"k2":"ç2"}]}');
-    // load a Ansi file (without especifying it, see CheckIsUtf8)
-    M.LoadFromFile('test13-Ansi.json');
+    // load a Ansi file (no convertion to UTF-8 is needed)
+    M.LoadFromFile('test13-Ansi.json', false);
     Result := Result and (M['ansi'].AsString = 'ãçüö');
-    // load a UTF-8 file
+    // load a UTF-8 file (default UTF-8 convertion)
     M.LoadFromFile('test13-UTF8.json');
     Result := Result and (M['utf8'].AsString = 'ãçüö');
   except

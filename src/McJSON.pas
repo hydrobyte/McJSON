@@ -153,10 +153,10 @@ type
     function ToString(aHuman: Boolean = False): string; overload;
     function Minify(const aCode: string): string;
 
-    procedure LoadFromStream(Stream: TStream; aUTF8: Boolean = True);
-    procedure SaveToStream(Stream: TStream; aHuman: Boolean = True);
-    procedure LoadFromFile(const aFileName: string; aUTF8: Boolean = True);
-    procedure SaveToFile(const aFileName: string; aHuman: Boolean = True);
+    procedure LoadFromStream(Stream: TStream; asUTF8: Boolean = True);
+    procedure SaveToStream(Stream: TStream; asHuman: Boolean = True; asUTF8: Boolean = True);
+    procedure LoadFromFile(const aFileName: string; asUTF8: Boolean = True);
+    procedure SaveToFile(const aFileName: string; asHuman: Boolean = True; asUTF8: Boolean = True);
 
     function GetEnumerator: TMcJsonItemEnumerator;
 
@@ -186,11 +186,11 @@ type
   function GetItemTypeStr(aType: TJItemType): string;
   function GetValueTypeStr(aType: TJValueType): string;
   function UnEscapeUnicode(const aStr: string): string;
-  function CheckIsUtf8(const aStr: string; out aAux: string): Boolean;
+  function CheckIsUtf8(const aStr: string; out aStrAnsi: string): Boolean;
 
 implementation
 
-const C_MCJSON_VERSION = '1.0.3';
+const C_MCJSON_VERSION = '1.0.4';
 const C_EMPTY_KEY      = '__a3mptyStr__';
 
 resourcestring
@@ -1071,11 +1071,8 @@ var
 begin
   // internally, use "." as Decimal Separator.
   Fmt.DecimalSeparator := '.';
-  try
-    Result := FloatToStr(aValue, Fmt);
-  except
-    Result := '';
-  end;
+  // will raize an exception if aValue not valid.
+  Result := FloatToStr(aValue, Fmt);
 end;
 
 function TMcJsonItem.InternalStrToFloat(const aStr: string): Extended;
@@ -1084,11 +1081,8 @@ var
 begin
   // internally, use "." as Decimal Separator.
   Fmt.DecimalSeparator := '.';
-  try
-    Result := StrToFloat(aStr, Fmt);
-  except
-    raise;
-  end;
+  // will raize an exception if aValue not valid.
+  Result := StrToFloat(aStr, Fmt);
 end;
 
 { ---------------------------------------------------------------------------- }
@@ -1456,31 +1450,35 @@ begin
   Result := trimWS(aCode);
 end;
 
-procedure TMcJsonItem.LoadFromStream(Stream: TStream; aUTF8: Boolean);
+procedure TMcJsonItem.LoadFromStream(Stream: TStream; asUTF8: Boolean);
 var
-  sCode, sAux: AnsiString;
+  sCode: AnsiString;
   len  : Int64;
 begin
   len   := Stream.Size - Stream.Position;
   sCode := '';
   SetLength(sCode, len);
   Stream.Read(Pointer(sCode)^, len);
-  if (aUTF8 and CheckIsUtf8(sCode, sAux))
-    then Self.AsJSON := sAux
-    else Self.AsJSON := sCode;
+  // asUTF8 has difference in behavior in Delphi(true)/Lazarus(false).
+  if (asUTF8)
+    then Self.AsJSON := Utf8ToAnsi(sCode) // UTF-8 to ANSI
+    else Self.AsJSON := sCode;            // keep as read
 end;
 
-procedure TMcJsonItem.SaveToStream(Stream: TStream; aHuman: Boolean);
+procedure TMcJsonItem.SaveToStream(Stream: TStream; asHuman, asUTF8: Boolean);
 var
   sCode: AnsiString;
   len  : Int64;
 begin
-  sCode := AnsiToUtf8(Self.ToString(aHuman));
-  len   := Length(sCode);
+  sCode := Self.ToString(asHuman);
+  // asUTF8 has difference in behavior in Delphi(true)/Lazarus(false).
+  if (asUTF8)
+    then sCode := AnsiToUtf8(sCode);
+  len := Length(sCode);
   Stream.Write(Pointer(sCode)^, len);
 end;
 
-procedure TMcJsonItem.LoadFromFile(const aFileName: string; aUTF8: Boolean);
+procedure TMcJsonItem.LoadFromFile(const aFileName: string; asUTF8: Boolean);
 var
   fileStream: TFileStream;
 begin
@@ -1488,20 +1486,20 @@ begin
   try
     fileStream := TFileStream.Create(aFileName, fmOpenRead or fmShareDenyWrite);
     Clear;
-    LoadFromStream(fileStream, aUTF8);
+    LoadFromStream(fileStream, asUTF8);
   finally
     fileStream.Free;
   end;
 end;
 
-procedure TMcJsonItem.SaveToFile(const aFileName: string; aHuman: Boolean);
+procedure TMcJsonItem.SaveToFile(const aFileName: string; asHuman, asUTF8: Boolean);
 var
   fileStream: TFileStream;
 begin
   fileStream := nil;
   try
     fileStream := TFileStream.Create(aFileName, fmCreate or fmShareDenyWrite);
-    SaveToStream(fileStream, aHuman);
+    SaveToStream(fileStream, asHuman, asUTF8);
   finally
     fileStream.Free;
   end;
@@ -1656,18 +1654,18 @@ begin
   Result := ans;
 end;
 
-function CheckIsUtf8(const aStr: string; out aAux: string): Boolean;
+function CheckIsUtf8(const aStr: string; out aStrAnsi: string): Boolean;
 var
   len : Integer;
 begin
   len := Length(aStr);
-  // convert to Ansi (if Utf8, will lead to length zero)
+  // convert to Ansi (if it is ANSI already, will lead to length zero in Delphi)
   try
-    aAux := Utf8ToAnsi(aStr);
+    aStrAnsi := Utf8ToAnsi(aStr);
   except
     ; // ignore
   end;
-  Result := (len > 0) and (Length(aAux) <> 0);
+  Result := (len > 0) and (Length(aStrAnsi) <> 0);
 end;
 
 end.

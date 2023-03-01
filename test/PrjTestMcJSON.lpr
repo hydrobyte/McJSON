@@ -1,10 +1,9 @@
 program PrjTestMcJSON;
 
-{.$mode objfpc}
 {$mode delphi}
 
+// string is AnsiString with UTF-8 Enconding
 {$H+}
-{$codepage cp1252}
 
 uses
   Classes,
@@ -301,7 +300,7 @@ end;
 function Test09(out Msg: string): Boolean;
 var
   N: TMcJsonItem;
-  S: string;
+  SAnsi, SRef: string;
 begin
   Msg := 'Test 09: escapes';
   N := TMcJsonItem.Create;
@@ -310,8 +309,9 @@ begin
     N.AsJSON := '{ "k": "\b\t\n\f\r\u05d1 \" \\ \/"}';
     Result := Result and (N['k'].AsString = '\b\t\n\f\r\u05d1 \" \\ \/');
     // unescape function
-    S := UnEscapeUnicode('aB\t\n\u00e7d\u00e7');
-    Result := Result and (S = 'aBçdç');
+    SAnsi := UnEscapeUnicode('aB\t\n\u00e7d\u00e7'); // debug sees '?' and no 'Ã§'
+    SRef  := Utf8ToAnsi('aBÃ§dÃ§');                    // because it isn't UTF-8
+    Result := Result and ( SAnsi = SRef );
   except
     on E: Exception do
     begin
@@ -522,24 +522,24 @@ begin
     // now add a array of objects
     N.Add('array').ItemType := jitArray;
     for i := 1 to 2 do
-      N['array'].Add.AsJSON := '{"k'+IntToStr(i)+'": "ç'+IntToStr(i)+'"}';
-    // save to file (not Human readable and UTF-8)
-    N.SaveToFile('test13.json', false);
+      N['array'].Add.AsJSON := '{"k'+IntToStr(i)+'": "Ã§'+IntToStr(i)+'"}';
+    // save to file (not Human readable and not convert to UTF-8 (it is))
+    N.SaveToFile('test13.json', false, false);
     // change N using IndexOf
     idx := N.IndexOf('array');
     if (idx >= 0) then
       N.Delete(idx);
-    // load from file (UTF-8 by default)
-    M.LoadFromFile('test13.json');
+    // load from file (no convertion to UTF-8 is needed)
+    M.LoadFromFile('test13.json', false);
     // check before and after delete
     Result := Result and (N.AsJSON = '{"i":123}'                                  )
-                     and (M.AsJSON = '{"i":123,"array":[{"k1":"ç1"},{"k2":"ç2"}]}');
-    // load a Ansi file (especifying it)
+                     and (M.AsJSON = '{"i":123,"array":[{"k1":"Ã§1"},{"k2":"Ã§2"}]}');
+    // load a Ansi file (no convertion to UTF-8 is needed)
     M.LoadFromFile('test13-Ansi.json', false);
-    Result := Result and (M['ansi'].AsString = 'ãçüö');
-    // load a UTF-8 file
-    M.LoadFromFile('test13-UTF8.json');
-    Result := Result and (M['utf8'].AsString = 'ãçüö');
+    Result := Result and (M['ansi'].AsString = Utf8ToAnsi('Ã£Ã§Ã¼Ã¶'));
+    // load a UTF-8 file (no convertion to UTF-8 is needed)
+    M.LoadFromFile('test13-UTF8.json', false);
+    Result := Result and (M['utf8'].AsString = 'Ã£Ã§Ã¼Ã¶');
   except
     on E: Exception do
     begin
@@ -842,9 +842,9 @@ begin
         Json.SaveToFile('test99.json');
       // remove an item
       Json.Delete('array');
-      // oops, load the backup
+      // oops, load the backup (no convertion to UTF-8 is needed)
       if (Json.Count = 4) then
-        Json.LoadFromFile('test99.json');
+        Json.LoadFromFile('test99.json', false);
       // test final result
       Result := (Json.AsJSON = '{"key1":1,"key2":true,"key3":1.234,"key4":"value 1","array":[1,2,3]}');
     except
