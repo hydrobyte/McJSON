@@ -8,6 +8,7 @@ program PrjTestMcJSON;
 uses
   Classes,
   SysUtils,
+  LConvEncoding,
   McJSON;
 
 
@@ -310,7 +311,7 @@ begin
     Result := Result and (N['k'].AsString = '\b\t\n\f\r\u05d1 \" \\ \/');
     // unescape function
     SAnsi := UnEscapeUnicode('aB\t\n\u00e7d\u00e7'); // debug sees '?' and no 'ç'
-    SRef  := Utf8ToAnsi('aBçdç');                    // because it isn't UTF-8
+    SRef  := UTF8ToCP1252('aBçdç');                  // because it isn't UTF-8
     Result := Result and ( SAnsi = SRef );
   except
     on E: Exception do
@@ -536,7 +537,7 @@ begin
                      and (M.AsJSON = '{"i":123,"array":[{"k1":"ç1"},{"k2":"ç2"}]}');
     // load a Ansi file (no convertion to UTF-8 is needed)
     M.LoadFromFile('test13-Ansi.json', false);
-    Result := Result and (M['ansi'].AsString = Utf8ToAnsi('ãçüö'));
+    Result := Result and (M['ansi'].AsString = UTF8ToCP1252('ãçüö'));
     // load a UTF-8 file (no convertion to UTF-8 is needed)
     M.LoadFromFile('test13-UTF8.json', false);
     Result := Result and (M['utf8'].AsString = 'ãçüö');
