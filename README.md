@@ -178,6 +178,43 @@ N.AsJSON := '{"o": [{"k1":"v1"}, {"k2":"v2"}]';
 N.Path('o[1].k2').AsString := 'value2';
 ```  
 
+### Property shorteners
+Since version 1.0.4 `McJSON` allows to use property shorteners like in Andreas Hausladen's [Json Data Objects](https://github.com/ahausladen/JsonDataObjects).
+```pascal
+// access (automatic creation as in JDO)
+Obj.S['foo'] := 'bar';
+Obj.S['bar'] := 'foo';
+// array creation, Obj is the owner of 'array'
+Obj.A['array'].Add.AsInteger := 10;
+Obj.A['array'].Add.AsInteger := 20;
+// object creation, 'array' is the owner of ChildObj
+ChildObj := Obj['array'].Add(jitObject);
+ChildObj.D['value'] := 12.3;
+// array creation, ChildObj is the owner of 'subarray'
+ChildObj.A['subarray'].Add.AsInteger := 100;
+ChildObj.A['subarray'].Add.AsInteger := 200;
+``` 
+
+Results in:
+
+```json
+{
+   "foo":"bar",
+   "bar":"foo",
+   "array":[
+      10,
+      20,
+      {
+         "value":12.3,
+         "subarray":[
+            100,
+            200
+         ]
+      }
+   ]
+}
+```
+
 ### Array or object items
 Here is how to access all items (children) of a JSON object and change their value type and content.
 ```pascal
