@@ -111,6 +111,7 @@ type
     // aux functions used in ToString
     function sFormat(aHuman: Boolean): string;
     function sFormatItem(aStrS: TStringStream; const aIn, aNL, aSp: string): string;
+    // other
     function isIndexValid(aIdx: Integer): Boolean;
     function InternalFloatToStr(aValue: Extended): string;
     function InternalStrToFloat(const aStr: string): Extended;
@@ -211,12 +212,12 @@ type
   // Auxiliary functions
   function GetItemTypeStr(aType: TJItemType): string;
   function GetValueTypeStr(aType: TJValueType): string;
+  function EscapeString(const aStr: string): string;
   function UnEscapeUnicode(const aStr: string): string;
-  function CheckIsUtf8(const aStr: string; out aStrAnsi: string): Boolean;
 
 implementation
 
-const C_MCJSON_VERSION = '1.0.4';
+const C_MCJSON_VERSION = '1.0.5';
 const C_EMPTY_KEY      = '__a3mptyStr__';
 
 resourcestring
@@ -330,6 +331,24 @@ begin
     SetLength(sRes, j-1);
   // result
   Result := sRes;
+end;
+
+function RemoveBOM(const aStr: string): string;
+var
+  len, i: Integer;
+begin
+  Result := aStr;
+  i := 1;
+  len := Length(aStr);
+  if (len > 2) then
+  begin
+    if ( (aStr[1] = Chr($EF)) and // UTF-8 BOM
+         (aStr[2] = Chr($BB)) and
+         (aStr[3] = Chr($BF)) )
+      then i := 4;
+  end;
+  if (i > 1) then
+    Result := System.Copy(aStr, i, len-i+1);
 end;
 
 { ---------------------------------------------------------------------------- }
@@ -1599,6 +1618,8 @@ begin
   sCode := '';
   SetLength(sCode, len);
   Stream.Read(Pointer(sCode)^, len);
+  // check and remove BOM
+  sCode := RemoveBOM(sCode);
   // asUTF8 has difference in behavior in Delphi(true)/Lazarus(false).
   if (asUTF8)
     then Self.AsJSON := Utf8ToAnsi(sCode) // UTF-8 to ANSI
@@ -1739,6 +1760,44 @@ begin
   end;
 end;
 
+function EscapeString(const aStr: string): string;
+const
+  ESCAPE          = '\';
+  QUOTATION_MARK  = '"';
+  REVERSE_SOLIDUS = '\';
+  SOLIDUS         = '/';
+  BACKSPACE       =  #8;
+  HORIZONTAL_TAB  =  #9;
+  NEW_LINE        = #10;
+  FORM_FEED       = #12;
+  CARRIAGE_RETURN = #13;
+var
+  c: Char;
+begin
+  Result := '';
+  for c in aStr do
+  begin
+    case c of
+      QUOTATION_MARK : Result := Result + ESCAPE + QUOTATION_MARK;
+      REVERSE_SOLIDUS: Result := Result + ESCAPE + REVERSE_SOLIDUS;
+      SOLIDUS        : Result := Result + ESCAPE + SOLIDUS;
+      BACKSPACE      : Result := Result + ESCAPE + 'b';
+      HORIZONTAL_TAB : Result := Result + ESCAPE + 't';
+      NEW_LINE       : Result := Result + ESCAPE + 'n';
+      FORM_FEED      : Result := Result + ESCAPE + 'f';
+      CARRIAGE_RETURN: Result := Result + ESCAPE + 'r';
+      else
+      begin
+        if ((Integer(c) <  32) or
+            (Integer(c) > 126)) then
+          Result := Result + ESCAPE + 'u' + IntToHex(Integer(c), 4)
+        else
+          Result := Result + c;
+      end;
+    end;
+  end;
+end;
+
 function UnEscapeUnicode(const aStr: string): string;
 var
   cs, cd, len: Integer;
@@ -1792,20 +1851,6 @@ begin
     SetLength(ans, cd-1);
   // return the string unescaped
   Result := ans;
-end;
-
-function CheckIsUtf8(const aStr: string; out aStrAnsi: string): Boolean;
-var
-  len : Integer;
-begin
-  len := Length(aStr);
-  // convert to Ansi (if it is ANSI already, will lead to length zero in Delphi)
-  try
-    aStrAnsi := Utf8ToAnsi(aStr);
-  except
-    ; // ignore
-  end;
-  Result := (len > 0) and (Length(aStrAnsi) <> 0);
 end;
 
 end.

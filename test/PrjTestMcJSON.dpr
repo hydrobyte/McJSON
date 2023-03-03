@@ -304,6 +304,9 @@ begin
   try
     N.AsJSON := '{ "k": "\b\t\n\f\r\u05d1 \" \\ \/"}';
     Result := Result and (N['k'].AsString = '\b\t\n\f\r\u05d1 \" \\ \/');
+    // escape string function
+    S := EscapeString('\a"b"ç');
+    Result := Result and (S = '\\a\"b\"\u00E7');
     // unescape function
     S := UnEscapeUnicode('aB\t\n\u00e7d\u00e7'); // debug sees 'ç'
     Result := Result and (S = 'aBçdç');
@@ -534,6 +537,9 @@ begin
     Result := Result and (M['ansi'].AsString = 'ãçüö');
     // load a UTF-8 file (default UTF-8 convertion)
     M.LoadFromFile('test13-UTF8.json');
+    Result := Result and (M['utf8'].AsString = 'ãçüö');
+    // load a UTF-8 file with BOM (default UTF-8 convertion)
+    M.LoadFromFile('test13-UTF8-BOM.json');
     Result := Result and (M['utf8'].AsString = 'ãçüö');
   except
     on E: Exception do
