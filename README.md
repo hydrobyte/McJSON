@@ -352,6 +352,19 @@ P.Free;
 Q.Free;
 ```
 
+### Escape strings
+Since version 1.0.5 strings can be escaped with `EscapeString()` helper function:
+```pascal
+N.AsJSON := EscapeString('{"path": "\dir\subdir"}');  
+```
+
+Results in:
+```json
+{
+  "path": "\\dir\\subdir"
+}
+```
+
 ### Inspect the content of an object
 Let's see how to inspect all the inner data structure, types and values of a `TMcJsonItem` object.
 ```c++
@@ -462,15 +475,13 @@ Error while parsing text: "line break" at pos "14"
 ```
 
 ### Load from and Save to Files
-`McJSON` can load from ASCII and UTF-8 files (without BOM). See `LoadFromFile` method.
+`McJSON` can load from ASCII and UTF-8 files (with or without BOM). See `LoadFromFile` method.
 The `SaveToFile` method will write using UTF-8 encoding.
 *Note*: since vertion 1.0.4, the test project's source code in Lazarus was converted to UTF-8, so the `asUTF8` parameter was set to `false`.
 
 ## Known issues
 The world is not perfect and neither am I.
 Here are some known issues:
-* In Lazarus, `Test13` needs `M.LoadFromFile('test13-Ansi.json', false);` in order to work with ANSI encoded file.
-* In RAD 2009 and later, function `CheckIsUtf8()` is not working properly. So, ANSI files need do be specified.
 * Trying to follow and confirm the [specification](https://www.json.org/json-en.html) using [JSONLint](https://jsonlint.com/).
 
 ## Performance tests
