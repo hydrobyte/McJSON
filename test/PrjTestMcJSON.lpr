@@ -307,15 +307,16 @@ begin
   N := TMcJsonItem.Create;
   Result := True;
   try
+    // check parse escapes
     N.AsJSON := '{ "k": "\b\t\n\f\r\u05d1 \" \\ \/"}';
     Result := Result and (N['k'].AsString = '\b\t\n\f\r\u05d1 \" \\ \/');
     // escape string function
     SAnsi := UTF8ToCP1252('\a"b"ç');
-    SAnsi := EscapeString(SAnsi);
+    SAnsi := McJsonEscapeString(SAnsi);
     Result := Result and (SAnsi = '\\a\"b\"\u00E7');
     // unescape function
-    SAnsi := UnEscapeUnicode('aB\t\n\u00e7d\u00e7'); // debug sees '?' and no 'ç'
-    SRef  := UTF8ToCP1252('aBçdç');                  // because it isn't UTF-8
+    SAnsi := McJsonUnEscapeString('aB\t\n\u00e7d\u00e7'); // debug sees '?' and no 'ç'
+    SRef  := UTF8ToCP1252('aBçdç');                       // because it isn't UTF-8
     Result := Result and ( SAnsi = SRef );
   except
     on E: Exception do

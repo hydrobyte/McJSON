@@ -302,13 +302,14 @@ begin
   N := TMcJsonItem.Create;
   Result := True;
   try
+    // check parse escapes
     N.AsJSON := '{ "k": "\b\t\n\f\r\u05d1 \" \\ \/"}';
     Result := Result and (N['k'].AsString = '\b\t\n\f\r\u05d1 \" \\ \/');
     // escape string function
-    S := EscapeString('\a"b"ç');
+    S := McJsonEscapeString('\a"b"ç');
     Result := Result and (S = '\\a\"b\"\u00E7');
     // unescape function
-    S := UnEscapeUnicode('aB\t\n\u00e7d\u00e7'); // debug sees 'ç'
+    S := McJsonUnEscapeString('aB\t\n\u00e7d\u00e7'); // debug sees 'ç' in S.
     Result := Result and (S = 'aBçdç');
   except
     on E: Exception do

@@ -212,8 +212,8 @@ type
   // Auxiliary functions
   function GetItemTypeStr(aType: TJItemType): string;
   function GetValueTypeStr(aType: TJValueType): string;
-  function EscapeString(const aStr: string): string;
-  function UnEscapeUnicode(const aStr: string): string;
+  function McJsonEscapeString(const aStr: string): string;
+  function McJsonUnEscapeString(const aStr: string): string;
 
 implementation
 
@@ -333,22 +333,19 @@ begin
   Result := sRes;
 end;
 
-function RemoveBOM(const aStr: string): string;
+function FindUtf8BOM(const Stream: TStream): Int64;
 var
-  len, i: Integer;
+  bom: array[0..2] of Byte;
 begin
-  Result := aStr;
-  i := 1;
-  len := Length(aStr);
-  if (len > 2) then
+  Result := 0;
+  if (Stream.Size > Length(bom)) then
   begin
-    if ( (aStr[1] = Chr($EF)) and // UTF-8 BOM
-         (aStr[2] = Chr($BB)) and
-         (aStr[3] = Chr($BF)) )
-      then i := 4;
+    Stream.Read(bom, sizeof(bom));
+    if ( (bom[0] = $EF) and // UTF-8 BOM
+         (bom[1] = $BB) and
+         (bom[2] = $BF) )
+      then Result := 3;
   end;
-  if (i > 1) then
-    Result := System.Copy(aStr, i, len-i+1);
 end;
 
 { ---------------------------------------------------------------------------- }
@@ -1614,12 +1611,13 @@ var
   sCode: AnsiString;
   len  : Int64;
 begin
+  // check UTF-8 BOM
+  Stream.Position := FindUtf8BOM(Stream);
+  // dimention and read stream to string
   len   := Stream.Size - Stream.Position;
   sCode := '';
   SetLength(sCode, len);
   Stream.Read(Pointer(sCode)^, len);
-  // check and remove BOM
-  sCode := RemoveBOM(sCode);
   // asUTF8 has difference in behavior in Delphi(true)/Lazarus(false).
   if (asUTF8)
     then Self.AsJSON := Utf8ToAnsi(sCode) // UTF-8 to ANSI
@@ -1760,7 +1758,7 @@ begin
   end;
 end;
 
-function EscapeString(const aStr: string): string;
+function McJsonEscapeString(const aStr: string): string;
 const
   ESCAPE          = '\';
   QUOTATION_MARK  = '"';
@@ -1798,7 +1796,7 @@ begin
   end;
 end;
 
-function UnEscapeUnicode(const aStr: string): string;
+function McJsonUnEscapeString(const aStr: string): string;
 var
   cs, cd, len: Integer;
   ndTrim: Boolean;
