@@ -231,7 +231,7 @@ resourcestring
 const
   WHITESPACE: set of char = [#9, #10, #13, #32]; // \t(ab), \r(CR), \n(LF), spc
   LINEBREAK:  set of char = [#10, #13];
-  ESCAPES:    set of char = ['b', 't', 'n', 'f', 'r', 'u', '"', '\', '/'];
+  ESCAPES:    set of char = ['b', 't', 'r', 'f', 'n', 'u', '"', '\', '/'];
   DIGITS:     set of char = ['0'..'9'];
   SIGNS:      set of char = ['+', '-'];
   CLOSES:     set of char = ['}', ']'];
@@ -333,7 +333,7 @@ begin
   Result := sRes;
 end;
 
-function FindUtf8BOM(const Stream: TStream): Int64;
+function findUtf8BOM(const Stream: TStream): Int64;
 var
   bom: array[0..2] of Byte;
 begin
@@ -343,8 +343,8 @@ begin
     Stream.Read(bom, sizeof(bom));
     if ( (bom[0] = $EF) and // UTF-8 BOM
          (bom[1] = $BB) and
-         (bom[2] = $BF) )
-      then Result := 3;
+         (bom[2] = $BF) ) then 
+      Result := 3;
   end;
 end;
 
@@ -1612,7 +1612,7 @@ var
   len  : Int64;
 begin
   // check UTF-8 BOM
-  Stream.Position := FindUtf8BOM(Stream);
+  Stream.Position := findUtf8BOM(Stream);
   // dimention and read stream to string
   len   := Stream.Size - Stream.Position;
   sCode := '';
@@ -1631,8 +1631,8 @@ var
 begin
   sCode := Self.ToString(asHuman);
   // asUTF8 has difference in behavior in Delphi(true)/Lazarus(false).
-  if (asUTF8)
-    then sCode := AnsiToUtf8(sCode);
+  if (asUTF8) then 
+    sCode := AnsiToUtf8(sCode);
   len := Length(sCode);
   Stream.Write(Pointer(sCode)^, len);
 end;
@@ -1786,8 +1786,8 @@ begin
       CARRIAGE_RETURN: Result := Result + ESCAPE + 'r';
       else
       begin
-        if ((Integer(c) <  32) or
-            (Integer(c) > 126)) then
+        if ( (Integer(c) <  32) or
+             (Integer(c) > 126) ) then
           Result := Result + ESCAPE + 'u' + IntToHex(Integer(c), 4)
         else
           Result := Result + c;
@@ -1820,7 +1820,7 @@ begin
     else
     begin
       ndTrim := True;
-      // u+(4 hexa) escape
+      // unescape u+(4 hexa) chars
       if (cs < len) and (aStr[cs+1] = 'u') then
       begin
         if (len-cs-1   >= 4   ) and
@@ -1839,7 +1839,17 @@ begin
           end;
         end;
       end
-      // ignore other escapes
+      // unescape visible chars
+      else if (cs < len) and
+              ((aStr[cs+1] = '\') or
+               (aStr[cs+1] = '/') or
+               (aStr[cs+1] = '"')) then
+      begin
+        ans[cd] := aStr[cs+1];
+        Inc(cd);
+        Inc(cs, 2);
+      end
+      // unescape other "whitespace" chars
       else
         Inc(cs, 2);
     end;

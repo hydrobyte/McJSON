@@ -301,7 +301,7 @@ end;
 function Test09(out Msg: string): Boolean;
 var
   N: TMcJsonItem;
-  SAnsi, SRef: string;
+  S, SAnsi, SRef: string;
 begin
   Msg := 'Test 09: escapes';
   N := TMcJsonItem.Create;
@@ -318,6 +318,14 @@ begin
     SAnsi := McJsonUnEscapeString('aB\t\n\u00e7d\u00e7'); // debug sees '?' and no 'ç'
     SRef  := UTF8ToCP1252('aBçdç');                       // because it isn't UTF-8
     Result := Result and ( SAnsi = SRef );
+    // escape and unescape sequence
+    S := McJsonEscapeString('a/b\c"');
+    Result := Result and (S = 'a\/b\\c\"');
+    S := McJsonUnEscapeString(S);
+    Result := Result and (S = 'a/b\c"');
+    // bad escape (will be ignored)
+    S := McJsonUnEscapeString('ab\');
+    Result := Result and (S = 'ab');
   except
     on E: Exception do
     begin
@@ -377,12 +385,13 @@ begin
     StrL.Add('bad array: wrong item'     +'='+ '{"k":["key":"value"]}');
     StrL.Add('bad array: wrong close'    +'='+ '{"k":["1","2"}}'      );
     // json inside a json
-    StrL.Add('bad value: json'           +'='+ '{"k":"{"key":"value"}"}');
+    StrL.Add('bad value: unescaped json' +'='+ '{"k":"{"key":"value"}"}');
     // unknown escape
-    StrL.Add('bad value: unknown escape' +'='+ '{"k":"aa \x aa"}');
-    StrL.Add('bad value: bad u escape 1' +'='+ '{"k":"\u"}'      );
-    StrL.Add('bad value: bad u escape 2' +'='+ '{"k":"\u000"}'   );
-    StrL.Add('bad value: bad u escape 3' +'='+ '{"k":"\u0FaX"}'  );
+    StrL.Add('bad value: unknown escape' +'='+ '{"k":"aa \x aa"}'     );
+    StrL.Add('bad value: invalid escape' +'='+ '{"k":"ab\"}'          );
+    StrL.Add('bad value: bad u escape 1' +'='+ '{"k":"\u"}'           );
+    StrL.Add('bad value: bad u escape 2' +'='+ '{"k":"\u000"}'        );
+    StrL.Add('bad value: bad u escape 3' +'='+ '{"k":"\u0FaX"}'       );
     // check
     for i:=0 to StrL.Count-1 do
     begin

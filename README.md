@@ -501,15 +501,15 @@ The next table summarizes the results[^1]:
 
 Library     | Generate  | Save     | Parse    | Load     | Access  | Total      |
 :-----------|----------:|---------:|---------:|---------:|--------:|-----------:|
-`McJSON`[^2]|     .11 s |    .07 s |    .12 s |    .11 s |   .02 s |      .42 s |
-`LkJson`    |     .27 s |    .12 s |    .46 s |    .36 s |   .00 s |     1.21 s |
+`McJSON`[^2]|     .11 s |    .07 s |    .12 s |    .09 s |   .83 s |     1.25 s |
+`LkJson`[^2]|     .30 s |    .11 s |    .47 s |    .36 s |   .01 s |     1.24 s |
 `JsonTools` |   48.00 s |    .70 s |  39.00 s |  40.00 s |   .48 s |    1.2 min |
 `myJSON`    |   50.00 s |    .07 s |  5.1 min |  7.7 min |  1.60 s |   13.1 min |
 `uJSON`     |  18.6 min | 20.1 min | 17.5 min |   4.31 s | 53.02 s |   57.6 min |
 
 
 [^1]: Metric: average time in seconds (s) for 5 consecutive executions. Total is the average of partial tests. Some results converted to minutes (min).
-[^2]: Version 1.0.5.
+[^2]: Version 1.0.5. Improved Test JSON 0.9.0 project that will be released soon.
 
 ### Notes about `McJSON`
 * Good performance, but not the better about random access due to the use of TList.
