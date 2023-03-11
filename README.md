@@ -353,9 +353,9 @@ Q.Free;
 ```
 
 ### Escape strings
-Since version 1.0.5 strings can be escaped with `EscapeString()` helper function:
+Since version 1.0.5 strings can be escaped with `McJsonEscapeString()` helper function:
 ```pascal
-N.AsJSON := '{"path": ' + EscapeString('\dir\subdir') + '}';  
+N.AsJSON := '{"path": ' + McJsonEscapeString('\dir\subdir') + '}';  
 ```
 
 Results in:

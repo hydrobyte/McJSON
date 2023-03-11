@@ -250,19 +250,21 @@ begin
     N['b'].AsBoolean := False;
     // get reference as object.
     M := N.AsObject;
-    // aux text
+    // aux test
     Aux := abs(N['f'].AsNumber - 456.123) < 0.001;
     // check result
-    Result :=     (N['i'].AsInteger = 321  )
-              and (Aux                     )
-              and (N['s'].AsString  = 'cba')
-              and (N['b'].AsBoolean = False)
-              and (N['n'].IsNull           )
-              and (M.Count          = 5    )
-              and (M['i'].AsInteger = 321  )
-              and (M['s'].AsString  = 'cba')
-              and (M['b'].AsBoolean = False)
-              and (M['n'].IsNull           );
+    Result :=     (N['i'].AsInteger = 321        )
+              and (N['i'].AsJSON    = '"i":321'  )
+              and (Aux                           )
+              and (N['s'].AsString  = 'cba'      )
+              and (N['b'].AsBoolean = False      )
+              and (N['n'].IsNull                 )
+              and (M.Count          = 5          )
+              and (M['i'].AsInteger = 321        )
+              and (M['s'].AsJSON    = '"s":"cba"')
+              and (M['s'].AsString  = 'cba'      )
+              and (M['b'].AsBoolean = False      )
+              and (M['n'].IsNull                 );
   except
     on E: Exception do
     begin
@@ -310,7 +312,7 @@ begin
     Result := Result and (S = '\\a\"b\"\u00E7');
     // unescape function
     S := McJsonUnEscapeString('aB\t\n\u00e7d\u00e7'); // debug sees 'ç' in S.
-    Result := Result and (S = 'aBçdç');
+    Result := Result and (S = 'aB' + #9 + #10 + 'çdç');
     // escape and unescape sequence
     S := McJsonEscapeString('a/b\c"');
     Result := Result and (S = 'a\/b\\c\"');
@@ -388,8 +390,8 @@ begin
     // check
     for i:=0 to StrL.Count-1 do
     begin
-      sName   := Trim( StrL.Names[i]      );
-      sTest   := Trim( StrL.Values[sName] );
+      sName := Trim( StrL.Names[i]      );
+      sTest := Trim( StrL.Values[sName] );
       if ( N.Check(sTest) ) then
       begin
         Msg := Msg + #13#10 + sIndent + 'Expected to fail but pass: ' + sName;
@@ -442,8 +444,8 @@ begin
     // check
     for i:=0 to StrL.Count-1 do
     begin
-      sName   := Trim( StrL.Names[i]      );
-      sTest   := Trim( StrL.Values[sName] );
+      sName := Trim( StrL.Names[i]      );
+      sTest := Trim( StrL.Values[sName] );
       if ( not N.Check(sTest) ) then
       begin
         Msg := Msg + #13#10 + sIndent + 'Expected to pass but fail: ' + sName;

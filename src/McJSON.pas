@@ -217,7 +217,7 @@ type
 
 implementation
 
-const C_MCJSON_VERSION = '1.0.5';
+const C_MCJSON_VERSION = '1.0.6';
 const C_EMPTY_KEY      = '__a3mptyStr__';
 
 resourcestring
@@ -229,14 +229,35 @@ resourcestring
   SIndexInvalid      = 'Invalid index: %s';
 
 const
-  WHITESPACE: set of char = [#9, #10, #13, #32]; // \t(ab), \r(CR), \n(LF), spc
-  LINEBREAK:  set of char = [#10, #13];
-  ESCAPES:    set of char = ['b', 't', 'r', 'f', 'n', 'u', '"', '\', '/'];
-  DIGITS:     set of char = ['0'..'9'];
-  SIGNS:      set of char = ['+', '-'];
-  CLOSES:     set of char = ['}', ']'];
-  HEXA:       set of char = ['0'..'9', 'A'..'F', 'a'..'f'];
-  PATHSEPS:   set of char = ['\', '/', '.'];
+  WHITESPACE: set of Char = [#9, #10, #13, #32]; // \t(ab), \n(LF), \r(CR), spc
+  LINEBREAK:  set of Char = [#10, #13];
+  ESCAPES:    set of Char = ['b', 't', 'n', 'f', 'r', '"', '/', '\', 'u' ];
+  DIGITS:     set of Char = ['0'..'9'];
+  SIGNS:      set of Char = ['+', '-'];
+  CLOSES:     set of Char = ['}', ']'];
+  HEXA:       set of Char = ['0'..'9', 'A'..'F', 'a'..'f'];
+  PATHSEPS:   set of Char = ['\', '/', '.'];
+  // escape chars names
+  CHAR_ESCAPE    = '\';
+  CHAR_BACKSPACE = 'b';
+  CHAR_H_TAB     = 't';
+  CHAR_NEW_LINE  = 'n';
+  CHAR_FORM_FEED = 'f';
+  CHAR_C_RETURN  = 'r';
+  CHAR_Q_MARK    = '"';
+  CHAR_SOLIDUS   = '/';
+  CHAR_R_SOLIDUS = '\';
+  CHAR_U_HEX     = 'u';
+  // escape chars integer values
+  ID_BACKSPACE =   #8;
+  ID_H_TAB     =   #9;
+  ID_NEW_LINE  =  #10;
+  ID_FORM_FEED =  #12;
+  ID_C_RETURN  =  #13;
+  ID_Q_MARK    =  #34; // '"'
+  ID_SOLIDUS   =  #47; // '/'
+  ID_R_SOLIDUS =  #92; // '\'
+  ID_U_HEX     = #117; // 'u'
 
 { ---------------------------------------------------------------------------- }
 { Auxiliary private functions }
@@ -1759,16 +1780,6 @@ begin
 end;
 
 function McJsonEscapeString(const aStr: string): string;
-const
-  ESCAPE          = '\';
-  QUOTATION_MARK  = '"';
-  REVERSE_SOLIDUS = '\';
-  SOLIDUS         = '/';
-  BACKSPACE       =  #8;
-  HORIZONTAL_TAB  =  #9;
-  NEW_LINE        = #10;
-  FORM_FEED       = #12;
-  CARRIAGE_RETURN = #13;
 var
   c: Char;
 begin
@@ -1776,19 +1787,19 @@ begin
   for c in aStr do
   begin
     case c of
-      QUOTATION_MARK : Result := Result + ESCAPE + QUOTATION_MARK;
-      REVERSE_SOLIDUS: Result := Result + ESCAPE + REVERSE_SOLIDUS;
-      SOLIDUS        : Result := Result + ESCAPE + SOLIDUS;
-      BACKSPACE      : Result := Result + ESCAPE + 'b';
-      HORIZONTAL_TAB : Result := Result + ESCAPE + 't';
-      NEW_LINE       : Result := Result + ESCAPE + 'n';
-      FORM_FEED      : Result := Result + ESCAPE + 'f';
-      CARRIAGE_RETURN: Result := Result + ESCAPE + 'r';
+      ID_BACKSPACE: Result := Result + CHAR_ESCAPE + ID_BACKSPACE;
+      ID_H_TAB    : Result := Result + CHAR_ESCAPE + ID_H_TAB    ;
+      ID_NEW_LINE : Result := Result + CHAR_ESCAPE + ID_NEW_LINE ;
+      ID_FORM_FEED: Result := Result + CHAR_ESCAPE + ID_FORM_FEED;
+      ID_C_RETURN : Result := Result + CHAR_ESCAPE + ID_C_RETURN ;
+      ID_Q_MARK   : Result := Result + CHAR_ESCAPE + ID_Q_MARK   ;
+      ID_SOLIDUS  : Result := Result + CHAR_ESCAPE + ID_SOLIDUS  ;
+      ID_R_SOLIDUS: Result := Result + CHAR_ESCAPE + ID_R_SOLIDUS;
       else
       begin
         if ( (Integer(c) <  32) or
-             (Integer(c) > 126) ) then
-          Result := Result + ESCAPE + 'u' + IntToHex(Integer(c), 4)
+             (Integer(c) > 126) ) then // \uXXXX
+          Result := Result + CHAR_ESCAPE + CHAR_U_HEX + IntToHex(Integer(c), 4)
         else
           Result := Result + c;
       end;
@@ -1817,11 +1828,23 @@ begin
       Inc(cs);
       Inc(cd);
     end
+    // there are escapes
     else
     begin
       ndTrim := True;
+      // unescape visible chars
+      if (cs < len) and
+         ((aStr[cs+1] = CHAR_Q_MARK   ) or
+          (aStr[cs+1] = CHAR_SOLIDUS  ) or
+          (aStr[cs+1] = CHAR_R_SOLIDUS)) then
+      begin
+        ans[cd] := aStr[cs+1];
+        Inc(cd);
+        Inc(cs, 2);
+      end
       // unescape u+(4 hexa) chars
-      if (cs < len) and (aStr[cs+1] = 'u') then
+      else if (cs < len) and
+              (aStr[cs+1] = CHAR_U_HEX) then
       begin
         if (len-cs-1   >= 4   ) and
            (aStr[cs+2] in HEXA) and (aStr[cs+3] in HEXA) and
@@ -1839,19 +1862,22 @@ begin
           end;
         end;
       end
-      // unescape visible chars
-      else if (cs < len) and
-              ((aStr[cs+1] = '\') or
-               (aStr[cs+1] = '/') or
-               (aStr[cs+1] = '"')) then
+      // unescape other "invisible" chars
+      else if (cs < len) then
       begin
-        ans[cd] := aStr[cs+1];
+        case aStr[cs+1] of
+          CHAR_BACKSPACE: ans[cd] := ID_BACKSPACE;
+          CHAR_H_TAB    : ans[cd] := ID_H_TAB    ;
+          CHAR_NEW_LINE : ans[cd] := ID_NEW_LINE ;
+          CHAR_FORM_FEED: ans[cd] := ID_FORM_FEED;
+          CHAR_C_RETURN : ans[cd] := ID_C_RETURN ;
+        end;
         Inc(cd);
         Inc(cs, 2);
       end
-      // unescape other "whitespace" chars
+      // problably end with bad escape. Example: 'a\'
       else
-        Inc(cs, 2);
+        Inc(cs);
     end;
   end;
   // trim extra size
