@@ -35,10 +35,6 @@ type
 
   TJItemType   = (jitUnset, jitValue, jitObject, jitArray);
   TJValueType  = (jvtString, jvtNumber, jvtBoolean, jvtNull);
-  TJEscapeType = (jetNormal , // #8 #9 #10 #12 #13 " \
-                  jetStrict , // Normal + /
-                  jetUnicode, // Strict + \uXXXX
-                  jetNone  ); // backwards compatibility
 
   TMcJsonItemEnumerator = class;
 
@@ -152,10 +148,10 @@ type
     property AsBoolean: Boolean     read fGetAsBoolean write fSetAsBoolean;
     property AsNull   : string      read fGetAsNull    write fSetAsNull   ;
 
-    constructor Create; overload;
-    constructor Create(aJItemType: TJItemType); overload;
-    constructor Create(const aItem: TMcJsonItem); overload;
-    constructor Create(const aCode: string); overload;
+    constructor Create; overload; virtual; 
+    constructor Create(aJItemType: TJItemType); overload; virtual;
+    constructor Create(const aItem: TMcJsonItem); overload; virtual;
+    constructor Create(const aCode: string); overload; virtual;
     destructor  Destroy; override;
 
     procedure Clear;
@@ -213,15 +209,21 @@ type
     property Current: TMcJsonItem read GetCurrent;
   end;
 
-  // Auxiliary functions
-  function GetItemTypeStr(aType: TJItemType): string;
-  function GetValueTypeStr(aType: TJValueType): string;
+  // Auxiliary escape types and functions
+  TJEscapeType = (jetNormal , // #8 #9 #10 #12 #13 " \
+                  jetStrict , // Normal + /
+                  jetUnicode, // Strict + \uXXXX
+                  jetNone  ); // backwards compatibility
   function McJsonEscapeString(const aStr: string; aEsc: TJEscapeType = jetNone): string;
   function McJsonUnEscapeString(const aStr: string): string;
 
+  // Auxiliary functions
+  function GetItemTypeStr(aType: TJItemType): string;
+  function GetValueTypeStr(aType: TJValueType): string;
+
 implementation
 
-const C_MCJSON_VERSION = '1.0.6';
+const C_MCJSON_VERSION = '1.0.7';
 const C_EMPTY_KEY      = '__a3mptyStr__';
 
 resourcestring
@@ -1279,21 +1281,18 @@ end;
 
 constructor TMcJsonItem.Create(aJItemType: TJItemType);
 begin
-  inherited Create;
   Create;
   Self.ItemType := aJItemType;
 end;
 
 constructor TMcJsonItem.Create(const aItem: TMcJsonItem);
 begin
-  inherited Create;
   Create;
   Self.AsJSON := aItem.AsJSON;
 end;
 
 constructor TMcJsonItem.Create(const aCode: string);
 begin
-  inherited Create;
   Create;
   try
     Self.AsJSON := aCode;
