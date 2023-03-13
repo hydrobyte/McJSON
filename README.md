@@ -490,6 +490,7 @@ The `SaveToFile` method will write using UTF-8 encoding.
 ## Known issues
 The world is not perfect and neither am I.
 Here are some known issues:
+* As `TMcJsonItem` objects are instantiated in hierarchical structure using lists `fChild`, there is a problem to create fields that propagate automatically between items. A solution under study tries to create a new parent class `TMcJson` which objects will be like roots and have `TMcJsonItem` objects as its children.
 * Trying to follow and confirm the [specification](https://www.json.org/json-en.html) using [JSONLint](https://jsonlint.com/).
 
 ## Performance tests

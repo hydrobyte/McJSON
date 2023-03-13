@@ -41,9 +41,9 @@ type
   TMcJsonItem = class
   private
     fType   : TJItemType;  // item type (value/object/array)
+    fValType: TJValueType; // value type (text/number/boolean)
     fKey    : string;      // item name
     fValue  : string;      // value (if item type is value)
-    fValType: TJValueType; // value type (text/number/boolean)
     fChild  : TList;       // child nodes (if item type is object/array)
     fSpeedUp: Boolean;     // flag to speed up the parse task
 
@@ -176,7 +176,7 @@ type
     function At(aIdx: Integer; const aKey: string = ''): TMcJsonItem; overload;
     function At(const aKey: string; aIdx: Integer = -1): TMcJsonItem; overload;
 
-    function ToString: string; overload;
+    function ToString: string; {$IFNDEF FPC} overload; {$ELSE} override; {$ENDIF}
     function ToString(aHuman: Boolean = False): string; overload;
     function Minify(const aCode: string): string;
 
@@ -381,8 +381,10 @@ end;
 
 function TMcJsonItem.fGetCount: Integer;
 begin
-  if (Self = nil) then Error(SItemNil, 'get count');
-  Result := fChild.Count;
+  if (Self   = nil) then Error(SItemNil, 'get count');
+  if (fChild = nil)
+    then Result := 0
+    else Result := fChild.Count;
 end;
 
 function TMcJsonItem.fGetKey(aIdx: Integer): string;
@@ -1274,7 +1276,7 @@ end;
 
 constructor TMcJsonItem.Create;
 begin
-  fChild   := TList.Create;
+  fChild   := nil;
   fType    := jitUnset;
   fSpeedUp := True;
 end;
@@ -1312,7 +1314,8 @@ procedure TMcJsonItem.Clear;
 var
   k: Integer;
 begin
-  if (Self = nil) then Error(SItemNil, 'clear');
+  if (Self   = nil) then Error(SItemNil, 'clear');
+  if (fChild = nil) then Exit;
   // free memory of all children (will be recursive)
   for k := 0 to (fChild.Count - 1) do
     TMcJsonItem(fChild[k]).Free;
@@ -1327,7 +1330,8 @@ begin
   idx    := -1;
   Result := idx;
   // check
-  if (Self = nil) then Error(SItemNil, 'index of');
+  if (Self   = nil) then Error(SItemNil, 'index of');
+  if (fChild = nil) then Exit;
   // looking for an element
   for k := 0 to (fChild.Count - 1) do
   begin
@@ -1397,6 +1401,7 @@ begin
   // create a new item with aKey and add it.
   aItem := TMcJsonItem.Create;
   aItem.fKey := aKey;
+  if (fChild = nil) then fChild := TList.Create;
   fChild.Add(aItem);
   // result aItem to permit chain
   Result := aItem;
@@ -1436,6 +1441,7 @@ begin
   // create a new item copy of aItem and add it.
   aNewItem := TMcJsonItem.Create(aItem);
   // add item.
+  if (fChild = nil) then fChild := TList.Create;
   fChild.Add(aNewItem);
   // result aNewItem to permit chain
   Result := aNewItem;
@@ -1474,6 +1480,7 @@ begin
   // create a new item with aKey and insert it.
   aItem := TMcJsonItem.Create;
   aItem.fKey := aKey;
+  if (fChild = nil) then fChild := TList.Create;
   fChild.Insert(aIdx, aItem);
   // result aItem to permit chain
   Result := aItem;
@@ -1494,6 +1501,7 @@ begin
   // create a new item copy of aItem and insert it.
   aNewItem := TMcJsonItem.Create(aItem);
   // insert item.
+  if (fChild = nil) then fChild := TList.Create;
   fChild.Insert(aIdx, aNewItem);
   // result aNewItem to permit chain
   Result := aNewItem;
@@ -1543,12 +1551,8 @@ end;
 function TMcJsonItem.HasKey(const aKey: string): Boolean;
 begin
   if (Self = nil) then Error(SItemNil, 'has key ' + Qot(aKey));
-  try
-    fGetItemByKey(aKey);
-    Result := True;
-  except
-    Result := False;
-  end;
+  // find index of item with aKey
+  Result := ( Self.IndexOf(aKey) >= 0 );
 end;
 
 function TMcJsonItem.IsEqual(const aItem: TMcJsonItem): Boolean;
