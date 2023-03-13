@@ -326,8 +326,13 @@ begin
     S := McJsonUnEscapeString(S);
     Result := Result and (S = 'a/b\c"');
     // bad escape (will be ignored)
-    S := McJsonUnEscapeString('ab\');
-    Result := Result and (S = 'ab');
+    S := McJsonUnEscapeString('a\"\');
+    Result := Result and (S = 'a"');
+    // escape levels
+    S := McJsonEscapeString('normal: \"/', jetNormal);
+    Result := Result and (S = 'normal: \\\"/');
+    S := McJsonEscapeString('strict: \"/', jetStrict);
+    Result := Result and (S = 'strict: \\\"\/');
   except
     on E: Exception do
     begin

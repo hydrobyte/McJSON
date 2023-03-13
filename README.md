@@ -365,6 +365,14 @@ Results in:
 }
 ```
 
+In version 1.0.6 was introduced the `TJEscapeType` enum used in `McJsonEscapeString()` with these escape levels:
+- `jetNormal`  : escapes `#8 #9 #10 #12 #13 " \`.
+- `jetStrict`  : Normal + `/`.
+- `jetUnicode` : Strict + `\uXXXX`.
+- `jetNone`    : backwards compatibility.
+
+These levels are inspired by Lazarus' helper function `StringToJSONString()` from library [fpjson](https://www.freepascal.org/docs-html/fcl/fpjson/stringtojsonstring.html).
+
 ### Inspect the content of an object
 Let's see how to inspect all the inner data structure, types and values of a `TMcJsonItem` object.
 ```c++

@@ -33,8 +33,12 @@ uses
 type
   EMcJsonException = class(Exception);
 
-  TJItemType  = (jitUnset, jitValue, jitObject, jitArray);
-  TJValueType = (jvtString, jvtNumber, jvtBoolean, jvtNull);
+  TJItemType   = (jitUnset, jitValue, jitObject, jitArray);
+  TJValueType  = (jvtString, jvtNumber, jvtBoolean, jvtNull);
+  TJEscapeType = (jetNormal , // #8 #9 #10 #12 #13 " \
+                  jetStrict , // Normal + /
+                  jetUnicode, // Strict + \uXXXX
+                  jetNone  ); // backwards compatibility
 
   TMcJsonItemEnumerator = class;
 
@@ -212,7 +216,7 @@ type
   // Auxiliary functions
   function GetItemTypeStr(aType: TJItemType): string;
   function GetValueTypeStr(aType: TJValueType): string;
-  function McJsonEscapeString(const aStr: string): string;
+  function McJsonEscapeString(const aStr: string; aEsc: TJEscapeType = jetNone): string;
   function McJsonUnEscapeString(const aStr: string): string;
 
 implementation
@@ -1779,7 +1783,7 @@ begin
   end;
 end;
 
-function McJsonEscapeString(const aStr: string): string;
+function McJsonEscapeString(const aStr: string; aEsc: TJEscapeType): string;
 var
   c: Char;
 begin
@@ -1793,12 +1797,15 @@ begin
       ID_FORM_FEED: Result := Result + CHAR_ESCAPE + ID_FORM_FEED;
       ID_C_RETURN : Result := Result + CHAR_ESCAPE + ID_C_RETURN ;
       ID_Q_MARK   : Result := Result + CHAR_ESCAPE + ID_Q_MARK   ;
-      ID_SOLIDUS  : Result := Result + CHAR_ESCAPE + ID_SOLIDUS  ;
       ID_R_SOLIDUS: Result := Result + CHAR_ESCAPE + ID_R_SOLIDUS;
+      ID_SOLIDUS  : if (aEsc >= jetStrict)
+                      then Result := Result + CHAR_ESCAPE + ID_SOLIDUS
+                      else Result := Result + c;
       else
       begin
-        if ( (Integer(c) <  32) or
-             (Integer(c) > 126) ) then // \uXXXX
+        if ( (aEsc >= jetUnicode) and
+             ((Integer(c) <  32)  or
+              (Integer(c) > 126)) ) then // \uXXXX
           Result := Result + CHAR_ESCAPE + CHAR_U_HEX + IntToHex(Integer(c), 4)
         else
           Result := Result + c;
@@ -1828,44 +1835,45 @@ begin
       Inc(cs);
       Inc(cd);
     end
+    // check bad ending escaped. Example: 'a\' -> 'a'
+    else if (cs = len) then
+    begin
+      ndTrim := True; // ignore it
+      Inc(cs);
+    end
     // there are escapes
-    else
+    else 
     begin
       ndTrim := True;
-      // unescape visible chars
-      if (cs < len) and
-         ((aStr[cs+1] = CHAR_Q_MARK   ) or
-          (aStr[cs+1] = CHAR_SOLIDUS  ) or
-          (aStr[cs+1] = CHAR_R_SOLIDUS)) then
+      // move next to '\'
+      Inc(cs);
+      // unescape visible escaped chars
+      if ((aStr[cs] = CHAR_Q_MARK   ) or
+          (aStr[cs] = CHAR_SOLIDUS  ) or
+          (aStr[cs] = CHAR_R_SOLIDUS)) then
       begin
-        ans[cd] := aStr[cs+1];
+        ans[cd] := aStr[cs];
         Inc(cd);
-        Inc(cs, 2);
+        Inc(cs);
       end
-      // unescape u+(4 hexa) chars
-      else if (cs < len) and
-              (aStr[cs+1] = CHAR_U_HEX) then
+      // unescape u+(4 hexa) escaped chars
+      else if (aStr[cs]  = CHAR_U_HEX) and
+              (len-cs   >= 4         ) and
+              (aStr[cs+1] in HEXA) and (aStr[cs+2] in HEXA) and
+              (aStr[cs+3] in HEXA) and (aStr[cs+1] in HEXA) then
       begin
-        if (len-cs-1   >= 4   ) and
-           (aStr[cs+2] in HEXA) and (aStr[cs+3] in HEXA) and
-           (aStr[cs+4] in HEXA) and (aStr[cs+5] in HEXA) then
-        begin
-          try
-            try
-              ans[cd] := Chr( StrToInt('$' + Copy(aStr, cs+2, 4)) );
-              Inc(cd);
-            except
-              ; // invalid hexa, ignore and move on
-            end;
-          finally
-            Inc(cs, 6); // \uXXXX
-          end;
+        try
+          ans[cd] := Chr( StrToInt('$' + Copy(aStr, cs+1, 4)) );
+          Inc(cd);
+        except
+          ; // invalid hexa, ignore and move on
         end;
+        Inc(cs, 5); // uXXXX
       end
-      // unescape other "invisible" chars
-      else if (cs < len) then
+      // unescape other "invisible" escaped chars
+      else 
       begin
-        case aStr[cs+1] of
+        case aStr[cs] of
           CHAR_BACKSPACE: ans[cd] := ID_BACKSPACE;
           CHAR_H_TAB    : ans[cd] := ID_H_TAB    ;
           CHAR_NEW_LINE : ans[cd] := ID_NEW_LINE ;
@@ -1873,12 +1881,9 @@ begin
           CHAR_C_RETURN : ans[cd] := ID_C_RETURN ;
         end;
         Inc(cd);
-        Inc(cs, 2);
-      end
-      // problably end with bad escape. Example: 'a\'
-      else
         Inc(cs);
-    end;
+      end;
+    end
   end;
   // trim extra size
   if (ndTrim) then
