@@ -223,7 +223,7 @@ type
 
 implementation
 
-const C_MCJSON_VERSION = '1.0.7';
+const C_MCJSON_VERSION = '1.0.8';
 const C_EMPTY_KEY      = '__a3mptyStr__';
 
 resourcestring
@@ -381,10 +381,10 @@ end;
 
 function TMcJsonItem.fGetCount: Integer;
 begin
-  if (Self   = nil) then Error(SItemNil, 'get count');
-  if (fChild = nil)
-    then Result := 0
-    else Result := fChild.Count;
+  if (Self = nil) then Error(SItemNil, 'get count');
+  if (Assigned(fChild))
+    then Result := fChild.Count
+    else Result := 0;
 end;
 
 function TMcJsonItem.fGetKey(aIdx: Integer): string;
@@ -435,10 +435,10 @@ end;
 
 function TMcJsonItem.fHasChild: Boolean;
 begin
-  if (Self   = nil) then Error(SItemNil, 'has child');
-  if (fChild = nil)
-    then Result := False
-    else Result := ( fChild.Count > 0 );
+  if (Self = nil) then Error(SItemNil, 'has child');
+  if (Assigned(fChild))
+    then Result := ( fChild.Count > 0 )
+    else Result := False;
 end;
 
 function TMcJsonItem.fIsNull: Boolean;
@@ -1328,12 +1328,14 @@ var
   k: Integer;
 begin
   if (Self   = nil) then Error(SItemNil, 'clear');
-  if (fChild = nil) then Exit;
-  // free memory of all children (will be recursive)
-  for k := 0 to (fChild.Count - 1) do
-    TMcJsonItem(fChild[k]).Free;
-  // clear list
-  fChild.Clear;
+  if (Assigned(fChild)) then
+  begin
+    // free memory of all children (will be recursive)
+    for k := 0 to (fChild.Count - 1) do
+      TMcJsonItem(fChild[k]).Free;
+    // clear list
+    fChild.Clear;
+  end;  
 end;
 
 function TMcJsonItem.IndexOf(const aKey: string): Integer;
@@ -1343,8 +1345,8 @@ begin
   idx    := -1;
   Result := idx;
   // check
-  if (Self   = nil) then Error(SItemNil, 'index of');
-  if (fChild = nil) then Exit;
+  if (Self = nil) then Error(SItemNil, 'index of');
+  if (not Assigned(fChild)) then Exit;
   // looking for an element
   for k := 0 to (fChild.Count - 1) do
   begin
@@ -1411,15 +1413,26 @@ begin
   // check unset item
   if (fType = jitUnset) then
     fSetType(jitObject);
-  // create a new item with aKey and add it.
+  // create a new item and check its parent type.
   aItem := TMcJsonItem.Create;
-  // check empty key like {"":"value"}
-  if ((aKey  =  ''      ) and
-      (fType <> jitArray))
-    then aItem.fKey := C_EMPTY_KEY
-    else aItem.fKey := aKey;
-  //aItem.fKey := aKey;
-  if (fChild = nil) then fChild := TList.Create;
+  // parent is array
+  if (fType = jitArray) then
+  begin
+    // if not empty key, create object
+    if (aKey <> '') then
+      aItem.Add(aKey)
+  end
+  // parent is object or value
+  else
+  begin
+    // check empty key {"":"value"}
+    if (aKey = '')
+      then aItem.fKey := C_EMPTY_KEY
+      else aItem.fKey := aKey;
+  end;
+  // child on demand
+  if (not Assigned(fChild)) then
+    fChild := TList.Create;
   fChild.Add(aItem);
   // result aItem to permit chain
   Result := aItem;
@@ -1459,7 +1472,8 @@ begin
   // create a new item copy of aItem and add it.
   aNewItem := TMcJsonItem.Create(aItem);
   // add item.
-  if (fChild = nil) then fChild := TList.Create;
+  if (not Assigned(fChild)) then
+    fChild := TList.Create;
   fChild.Add(aNewItem);
   // result aNewItem to permit chain
   Result := aNewItem;
@@ -1498,7 +1512,8 @@ begin
   // create a new item with aKey and insert it.
   aItem := TMcJsonItem.Create;
   aItem.fKey := aKey;
-  if (fChild = nil) then fChild := TList.Create;
+  if (not Assigned(fChild)) then
+    fChild := TList.Create;
   fChild.Insert(aIdx, aItem);
   // result aItem to permit chain
   Result := aItem;
@@ -1519,7 +1534,8 @@ begin
   // create a new item copy of aItem and insert it.
   aNewItem := TMcJsonItem.Create(aItem);
   // insert item.
-  if (fChild = nil) then fChild := TList.Create;
+  if (not Assigned(fChild)) then
+    fChild := TList.Create;
   fChild.Insert(aIdx, aNewItem);
   // result aNewItem to permit chain
   Result := aNewItem;
@@ -1765,7 +1781,7 @@ end;
 
 function TMcJsonItemEnumerator.GetCurrent: TMcJsonItem;
 begin
-  if      (fItem.fChild = nil         ) then Result := nil
+  if      (not Assigned(fItem.fChild) ) then Result := nil
   else if (fIndex < 0                 ) then Result := nil
   else if (fIndex < fItem.fChild.Count) then Result := TMcJsonItem(fItem.fChild[fIndex])
   else                                  Result := nil;

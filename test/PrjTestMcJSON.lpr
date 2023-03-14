@@ -166,6 +166,14 @@ begin
     N.Clear;
     N.Add('').AsString := 'v';
     Result := Result and (N.AsJSON = '{"":"v"}');
+    // add empty array
+    N.Clear;
+    N.Add('a').ItemType := jitArray;
+    Result := Result and (N.AsJSON = '{"a":[]}');
+    // add objects into array
+    N['a'].Add('k1').AsString := 'v1';
+    N['a'].Add('k2').AsString := 'v2';
+    Result := Result and (N.AsJSON = '{"a":[{"k1":"v1"},{"k2":"v2"}]}');
     // add nested object
     N.Clear;
     N.Add('k1').Add('k2').Add('k3').AsString := 'v3';
