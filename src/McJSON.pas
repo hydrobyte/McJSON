@@ -33,8 +33,8 @@ uses
 type
   EMcJsonException = class(Exception);
 
-  TJItemType   = (jitUnset, jitValue, jitObject, jitArray);
-  TJValueType  = (jvtString, jvtNumber, jvtBoolean, jvtNull);
+  TJItemType  = (jitUnset, jitValue, jitObject, jitArray);
+  TJValueType = (jvtString, jvtNumber, jvtBoolean, jvtNull);
 
   TMcJsonItemEnumerator = class;
 
@@ -176,7 +176,7 @@ type
     function At(aIdx: Integer; const aKey: string = ''): TMcJsonItem; overload;
     function At(const aKey: string; aIdx: Integer = -1): TMcJsonItem; overload;
 
-    function ToString: string; {$IFNDEF FPC} overload; {$ELSE} override; {$ENDIF}
+    function ToString: string;{$IFNDEF FPC} overload;{$ELSE} override;{$ENDIF}
     function ToString(aHuman: Boolean = False): string; overload;
     function Minify(const aCode: string): string;
 
@@ -435,8 +435,10 @@ end;
 
 function TMcJsonItem.fHasChild: Boolean;
 begin
-  if (Self = nil) then Error(SItemNil, 'has child');
-  Result := ( fChild.Count > 0 );
+  if (Self   = nil) then Error(SItemNil, 'has child');
+  if (fChild = nil)
+    then Result := False
+    else Result := ( fChild.Count > 0 );
 end;
 
 function TMcJsonItem.fIsNull: Boolean;
@@ -1237,6 +1239,17 @@ begin
         then aStrS.WriteString(Qot(fValue))
         else aStrS.WriteString(    fValue );
     end;
+    // empty key and/or empty value
+    jitUnset:
+    begin
+      if (fKey <> '') then
+      begin
+        aStrS.WriteString(QotKey(fKey) + aSp);
+        if (fValType = jvtString)
+          then aStrS.WriteString(Qot(fValue))
+          else aStrS.WriteString(    fValue );
+      end;
+    end;
   end;
 end;
 
@@ -1400,7 +1413,12 @@ begin
     fSetType(jitObject);
   // create a new item with aKey and add it.
   aItem := TMcJsonItem.Create;
-  aItem.fKey := aKey;
+  // check empty key like {"":"value"}
+  if ((aKey  =  ''      ) and
+      (fType <> jitArray))
+    then aItem.fKey := C_EMPTY_KEY
+    else aItem.fKey := aKey;
+  //aItem.fKey := aKey;
   if (fChild = nil) then fChild := TList.Create;
   fChild.Add(aItem);
   // result aItem to permit chain

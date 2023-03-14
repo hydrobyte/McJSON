@@ -44,6 +44,7 @@ begin
               and (N.HasKey('key')          = True     )
               and (N.HasKey('not')          = False    )
               and (N.HasChild               = True     )
+              and (N['key'].HasChild        = False    )
               and (N['key'].AsString        = 'value'  )
               and (N.Keys[0]                = 'key'    )
               and (N.Items[0].AsString      = 'value'  )
@@ -152,6 +153,14 @@ begin
               and (N['sub'].Key                         = 'sub'    )
               and (N['sub'].Items[2]['key3'].Key        = 'key3'   )
               and (N['sub'].Items[2]['key3'].AsInteger  = 3        );
+    // add item with empty value.
+    N.Clear;
+    N.Add('k');
+    Result := Result and (N.AsJSON = '{"k":""}');
+    // add item with empty key.
+    N.Clear;
+    N.Add('').AsString := 'v';
+    Result := Result and (N.AsJSON = '{"":"v"}');
     // add nested object
     N.Clear;
     N.Add('k1').Add('k2').Add('k3').AsString := 'v3';
