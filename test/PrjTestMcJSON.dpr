@@ -169,6 +169,10 @@ begin
     N['a'].Add('k1').AsString := 'v1';
     N['a'].Add('k2').AsString := 'v2';
     Result := Result and (N.AsJSON = '{"a":[{"k1":"v1"},{"k2":"v2"}]}');
+    // add empty object
+    N.Clear;
+    N.Add('o').ItemType := jitObject;
+    Result := Result and (N.AsJSON = '{"o":{}}');
     // add nested object
     N.Clear;
     N.Add('k1').Add('k2').Add('k3').AsString := 'v3';
@@ -447,22 +451,23 @@ begin
   anyFail := False;
   try
     // keys
-    StrL.Add('key: empty'          +'='+ '{"":"value"}'               );
-    StrL.Add('key: keyword'        +'='+ '{"{":"value"}'              );
+    StrL.Add('key: empty'            +'='+ '{"":"value"}'               );
+    StrL.Add('key: keyword'          +'='+ '{"{":"value"}'              );
     // values
-    StrL.Add('value: alone'        +'='+ '"k"'                        );
-    StrL.Add('value: leading zero' +'='+ '{"k": 0.1234}'              );
+    StrL.Add('value: alone'          +'='+ '"k"'                        );
+    StrL.Add('value: leading zero 1' +'='+ '{"k": 0 }'                  );
+    StrL.Add('value: leading zero 2' +'='+ '{"k": 0.1234}'              );
     // objects
-    StrL.Add('object: empty'       +'='+ '{}'                         );
-    StrL.Add('object: empty w key' +'='+ '{"o": { }}'                 );
+    StrL.Add('object: empty'         +'='+ '{}'                         );
+    StrL.Add('object: empty w key'   +'='+ '{"o": { }}'                 );
     // arrays
-    StrL.Add('array: empty no key' +'='+ '[]'                         );
-    StrL.Add('array: empty w key'  +'='+ '{"a": [ ]}'                 );
-    StrL.Add('array: empty'        +'='+ '{"k":[]}'                   );
-    StrL.Add('array: no root'      +'='+ '[1,2]'                      );
-    StrL.Add('array: bi openned'   +'='+ '{"k":[["1","2"]]}'          );
+    StrL.Add('array: empty no key'   +'='+ '[]'                         );
+    StrL.Add('array: empty w key'    +'='+ '{"a": [ ]}'                 );
+    StrL.Add('array: empty'          +'='+ '{"k":[]}'                   );
+    StrL.Add('array: no root'        +'='+ '[1,2]'                      );
+    StrL.Add('array: bi openned'     +'='+ '{"k":[["1","2"]]}'          );
     // json inside a json
-    StrL.Add('value: escaped json' +'='+ '{"k":"{\"key\":\"value\"}"}');
+    StrL.Add('value: escaped json'   +'='+ '{"k":"{\"key\":\"value\"}"}');
     // check
     for i:=0 to StrL.Count-1 do
     begin

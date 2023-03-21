@@ -1062,7 +1062,7 @@ end;
 
 function TMcJsonItem.readNumber(const aCode: string; aPos, aLen: Integer): Integer;
 var
-  c, ePos: Integer;
+  c, cEnd, ePos: Integer;
 begin
   // we got here because current symbol was '+/-' or Digit
   c := aPos;
@@ -1095,6 +1095,8 @@ begin
   Self.fSetType(jitValue);
   Self.fValType := jvtNumber;
   Self.fValue   := System.Copy(aCode, aPos, c-aPos);
+  // last number pos.
+  cEnd := c;
   // escape white spaces
   Inc(c, escapeWS(aCode, c, aLen));
   // valid-JSON: not a number
@@ -1102,7 +1104,7 @@ begin
           (aCode[c] in CLOSES)) then
     Error(SParsingError, 'not a number', IntToStr(c));
   // valid-JSON: leading zero
-  if (aCode[aPos]   =  '0') and (aPos < aLen) and (c-aPos > 1) and
+  if (aCode[aPos]   =  '0') and (aPos < aLen) and (cEnd-aPos > 1) and
      (aCode[aPos+1] <> '.') then
     Error(SParsingError, 'bad number, leading zero', IntToStr(c));
   // stop next to number last char
