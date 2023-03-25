@@ -399,7 +399,8 @@ begin
     StrL.Add('bad key: not closed 1'     +'='+ '{"k:"value"}'         );
     StrL.Add('bad key: not closed 2'     +'='+ '{"key:"value"}'       );
     StrL.Add('bad key: not opened'       +'='+ '{k":"value"}'         );
-    StrL.Add('bad key: duplicated'       +'='+ '{"k":1,"a":2,"a":3}'  );
+    StrL.Add('bad key: duplicated 1'     +'='+ '{"k":1,"a":2,"a":3}'  );
+    StrL.Add('bad key: duplicated 2'     +'='+ '{"o":{"a":1,"a":2}}'  );
     // object bad formats
     StrL.Add('bad object: not closed 1'  +'='+ '{'                    );
     StrL.Add('bad object: not closed 2'  +'='+ '{"k":"value"'         );
@@ -724,7 +725,6 @@ begin
       // Exception Duplicate key "%s"
       else if (i = 7) then
       begin
-        N.SpeedUp := False;
         N.AsJSON := '{"k":"v", "k":"v"}';
         anyPass := True;
       end
@@ -864,6 +864,39 @@ begin
   N.Free;
 end;
 
+function Test21(out Msg: string): Boolean;
+var
+  N: TMcJsonItem;
+begin
+  Msg := 'Test 21: check methods';
+  N   := TMcJsonItem.Create;
+  Result := True;
+  try
+    // bad JSON: key duplicated.
+    N.AsJSON := '{"k":1, "k":2}';
+    // check silently
+    Result := Result and (N.Check(N.AsJSON) = False);
+    // check with exception capture
+    try
+      Result := Result and (N.CheckException(N.AsJSON) = False);
+    except
+      on E: Exception do
+      begin
+        Msg := Msg + #13#10 + sIndent + 'Expected: ' + E.Message;
+        Result := Result and True;
+      end;
+    end;
+
+  except
+    on E: Exception do
+    begin
+      Msg := Msg + #13#10 + sIndent + 'Error: ' + E.Message;
+      Result := False;
+    end;
+  end;
+  N.Free;
+end;
+
 function Test99(out Msg: string): Boolean;
 var
   Json: TMcJsonItem;
@@ -934,6 +967,7 @@ begin
   Check(Test18, TotalPassed, TotalFailed);
   Check(Test19, TotalPassed, TotalFailed);
   Check(Test20, TotalPassed, TotalFailed);
+  Check(Test21, TotalPassed, TotalFailed);
 
   Check(Test99, TotalPassed, TotalFailed);
 

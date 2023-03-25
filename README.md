@@ -151,9 +151,19 @@ end;
 ```
 If you want to check if a JSON string is valid:
 ```pascal
-Answer := N.Check( '{"i":[123}' ); 
-// Answer will be false due to exception:
-// Error while parsing text: expected "," got "}" at pos "10"
+Answer := N.Check( '{"i":[123}' ); // Answer will be false
+```
+The `Check` method will not raise any exception. The example above will catch and hide the `Error while parsing text: "expected , got }" at pos "10"` exception.
+If you need to catch and manage exceptions, use `CheckException` like:
+```pascal
+try
+  Answer := N.CheckException( '{"k":1, "k":2}' ); // Answer will be false
+except
+  on E: Exception do
+  begin
+    // Error while parsing text: "duplicated key k" at pos "11" 
+  end;
+end;    
 ```
 
 ### Paths

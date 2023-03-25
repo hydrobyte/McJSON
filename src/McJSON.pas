@@ -45,7 +45,6 @@ type
     fKey    : string;      // item name
     fValue  : string;      // value (if item type is value)
     fChild  : TList;       // child nodes (if item type is object/array)
-    fSpeedUp: Boolean;     // flag to speed up the parse task
 
     // property getters
     function fGetCount: Integer;
@@ -96,14 +95,15 @@ type
     procedure fSetNull   (const aKey: string; aValue: string     );
 
     // string single-pass parser
-    function parse(const aCode: string; aPos, aLen: Integer): Integer;
+    procedure parse(const aCode: string; aSpeed: Boolean); overload;
+    function parse(const aCode: string; aPos, aLen: Integer; aSpeed: Boolean): Integer; overload;
     // read methods used by parse
     function readString (const aCode: string; out aStr:string; aPos, aLen: Integer): Integer;
     function readChar   (const aCode: string; aChar: Char; aPos, aLen: Integer): Integer;
     function readKeyword(const aCode, aKeyword: string; aPos, aLen: Integer): Integer;
     function readValue  (const aCode: string; aPos, aLen: Integer): Integer;
-    function readObject (const aCode: string; aPos, aLen: Integer): Integer;
-    function readArray  (const aCode: string; aPos, aLen: Integer): Integer;
+    function readObject (const aCode: string; aPos, aLen: Integer; aSpeed: Boolean): Integer;
+    function readArray  (const aCode: string; aPos, aLen: Integer; aSpeed: Boolean): Integer;
     function readNumber (const aCode: string; aPos, aLen: Integer): Integer;
     function readBoolean(const aCode: string; aPos, aLen: Integer): Integer;
     function readNull   (const aCode: string; aPos, aLen: Integer): Integer;
@@ -128,7 +128,6 @@ type
 
     property HasChild: Boolean read fHasChild;
     property IsNull  : Boolean read fIsNull;
-    property SpeedUp : Boolean read fSpeedUp write fSpeedUp;
     // shorteners properties
     property J[const aKey: string]: string      read fGetJSON    write fSetJSON   ;
     property O[const aKey: string]: TMcJsonItem read fGetObject  write fSetObject ;
@@ -169,7 +168,8 @@ type
     function Delete(const aKey: string): Boolean; overload;
     function HasKey(const aKey: string): Boolean;
     function IsEqual(const aItem: TMcJsonItem): Boolean;
-    function Check(const aStr: string; aSpeedUp: Boolean = False): Boolean;
+    function Check(const aStr: string; aSpeed: Boolean = False): Boolean;
+    function CheckException(const aStr: string; aSpeed: Boolean = False): Boolean;
     function CountItems: Integer;
 
     // array shortener
@@ -223,7 +223,7 @@ type
 
 implementation
 
-const C_MCJSON_VERSION = '1.0.8';
+const C_MCJSON_VERSION = '1.0.9';
 const C_EMPTY_KEY      = '__a3mptyStr__';
 
 resourcestring
@@ -659,22 +659,10 @@ begin
 end;
 
 procedure TMcJsonItem.fSetAsJSON(aValue: string);
-var
-  c, len: Integer;
 begin
   if (Self = nil) then Error(SItemNil, 'set as JSON');
-  Clear;
-  len := Length(aValue);
-  c   := 1;
-  try
-    c := Self.parse(aValue, 1, len);
-  except
-    on EOutOfMemory do
-      Error(SItemNil, 'out of memory with ' + IntToStr(CountItems) + ' items');
-  end;
-  // valid-JSON
-  if (c < len) then
-    Error(SParsingError, 'bad json', IntToStr(len));
+  // speed up = no key duplication verification (default)
+  Self.parse(aValue, True);
 end;
 
 procedure TMcJsonItem.fSetAsObject(aValue: TMcJsonItem);
@@ -859,7 +847,25 @@ begin
     else Self[aKey].AsNull     := aValue;
 end;
 
-function TMcJsonItem.parse(const aCode: string; aPos, aLen: Integer): Integer;
+procedure TMcJsonItem.parse(const aCode: string; aSpeed: Boolean);
+var
+  c, len: Integer;
+begin
+  Clear;
+  len := Length(aCode);
+  c   := 1;
+  try
+    c := Self.parse(aCode, 1, len, aSpeed);
+  except
+    on EOutOfMemory do
+      Error(SItemNil, 'out of memory with ' + IntToStr(CountItems) + ' items');
+  end;
+  // valid-JSON
+  if (c < len) then
+    Error(SParsingError, 'bad json', IntToStr(len));
+end;
+
+function TMcJsonItem.parse(const aCode: string; aPos, aLen: Integer; aSpeed: Boolean): Integer;
 begin
   Result := aPos;
   // check position
@@ -869,8 +875,8 @@ begin
   Inc(aPos, escapeWS(aCode, aPos, aLen));
   // now in the first character our open parenthesis
   case aCode[aPos] of
-    '{':                aPos := readObject (aCode, aPos, aLen); // recursive
-    '[':                aPos := readArray  (aCode, aPos, aLen); // recursive
+    '{':                aPos := readObject (aCode, aPos, aLen, aSpeed); // recursive
+    '[':                aPos := readArray  (aCode, aPos, aLen, aSpeed); // recursive
     '"':                aPos := readValue  (aCode, aPos, aLen);
     '0'..'9', '+', '-': aPos := readNumber (aCode, aPos, aLen);
     't', 'T', 'f', 'F': aPos := readBoolean(aCode, aPos, aLen);
@@ -887,7 +893,7 @@ begin
   Result := aPos;
 end;
 
-function TMcJsonItem.readObject(const aCode: string; aPos, aLen: Integer): Integer;
+function TMcJsonItem.readObject(const aCode: string; aPos, aLen: Integer; aSpeed: Boolean): Integer;
 var
   c: Integer;
   aItem: TMcJsonItem;
@@ -918,7 +924,7 @@ begin
     // create a new item with parsed key
     // check duplicate (subject to speed up flag)
     aItem := nil;
-    if (fSpeedUp) then
+    if (aSpeed) then
       aItem := Self.Add(sKey)
     else
     begin
@@ -935,7 +941,7 @@ begin
     Inc(c, escapeWS(aCode, c, aLen));
     // parsing a value (recursive)
     if (aItem <> nil) then
-      c := aItem.parse(aCode, c, aLen);
+      c := aItem.parse(aCode, c, aLen, aSpeed);
     // move on
     Inc(c, escapeWS(aCode, c, aLen));
   end;
@@ -948,7 +954,7 @@ begin
   Result := c+1;
 end;
 
-function TMcJsonItem.readArray(const aCode: string; aPos, aLen: Integer): Integer;
+function TMcJsonItem.readArray(const aCode: string; aPos, aLen: Integer; aSpeed: Boolean): Integer;
 var
   c: Integer;
   aItem: TMcJsonItem;
@@ -973,7 +979,7 @@ begin
     // Creating a new value (here explicity whith no key)
     aItem := Self.Add();
     // parsing values (recursive)
-    c := aItem.parse(aCode, c, aLen); // 1,2,3 or {...},{...}
+    c := aItem.parse(aCode, c, aLen, aSpeed); // 1,2,3 or {...},{...}
     if (c > aLen) then
       Error(SParsingError, 'bad array', IntToStr(aLen));
     // move on
@@ -1293,7 +1299,6 @@ constructor TMcJsonItem.Create;
 begin
   fChild   := nil;
   fType    := jitUnset;
-  fSpeedUp := True;
 end;
 
 constructor TMcJsonItem.Create(aJItemType: TJItemType);
@@ -1599,20 +1604,36 @@ begin
     Result := (Self.AsJSON = aItem.AsJSON);
 end;
 
-function TMcJsonItem.Check(const aStr: string; aSpeedUp: Boolean): Boolean;
+function TMcJsonItem.Check(const aStr: string; aSpeed: Boolean): Boolean;
 var
   aItem: TMcJsonItem;
 begin
+  if (Self = nil) then Error(SItemNil, 'check');
   aItem := TMcJsonItem.Create;
   try
-    aItem.fSpeedUp := aSpeedUp;
-    aItem.AsJSON   := aStr;
-//    Result := True;
-    Result := (aItem.AsJSON = trimWS(aStr));
-  except
-    Result := False;
+    try
+      aItem.parse(aStr, aSpeed);
+      Result := (aItem.AsJSON = trimWS(aStr));
+    except
+      Result := False;
+    end;
+  finally
+    aItem.Free;
   end;
-  aItem.Free;
+end;
+
+function TMcJsonItem.CheckException(const aStr: string; aSpeed: Boolean): Boolean;
+var
+  aItem: TMcJsonItem;
+begin
+  if (Self = nil) then Error(SItemNil, 'check exception');
+  aItem := TMcJsonItem.Create;
+  try
+    aItem.parse(aStr, aSpeed);
+    Result := (aItem.AsJSON = trimWS(aStr));
+  finally
+    aItem.Free;
+  end;
 end;
 
 function TMcJsonItem.CountItems: Integer;
