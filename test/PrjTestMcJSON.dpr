@@ -335,10 +335,10 @@ begin
     S := McJsonUnEscapeString('aB\t\n\u00e7d\u00e7'); // debug sees 'ç' in S.
     Result := Result and (S = 'aB' + #9 + #10 + 'çdç');
     // escape and unescape sequence
-    S := McJsonEscapeString('a/b\c"');
-    Result := Result and (S = 'a\/b\\c\"');
+    S := McJsonEscapeString('a/b\c"' + #8 + #9 + #10 + #12 + #13);
+    Result := Result and (S = 'a\/b\\c\"\b\t\n\f\r');
     S := McJsonUnEscapeString(S);
-    Result := Result and (S = 'a/b\c"');
+    Result := Result and (S = ('a/b\c"' + #8 + #9 + #10 + #12 + #13) );
     // bad escape (will be ignored)
     S := McJsonUnEscapeString('a\"\');
     Result := Result and (S = 'a"');

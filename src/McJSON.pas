@@ -223,7 +223,7 @@ type
 
 implementation
 
-const C_MCJSON_VERSION = '1.0.9';
+const C_MCJSON_VERSION = '1.1.0';
 const C_EMPTY_KEY      = '__a3mptyStr__';
 
 resourcestring
@@ -1851,15 +1851,15 @@ begin
   for c in aStr do
   begin
     case c of
-      ID_BACKSPACE: Result := Result + CHAR_ESCAPE + ID_BACKSPACE;
-      ID_H_TAB    : Result := Result + CHAR_ESCAPE + ID_H_TAB    ;
-      ID_NEW_LINE : Result := Result + CHAR_ESCAPE + ID_NEW_LINE ;
-      ID_FORM_FEED: Result := Result + CHAR_ESCAPE + ID_FORM_FEED;
-      ID_C_RETURN : Result := Result + CHAR_ESCAPE + ID_C_RETURN ;
-      ID_Q_MARK   : Result := Result + CHAR_ESCAPE + ID_Q_MARK   ;
-      ID_R_SOLIDUS: Result := Result + CHAR_ESCAPE + ID_R_SOLIDUS;
+      ID_BACKSPACE: Result := Result + CHAR_ESCAPE + CHAR_BACKSPACE;
+      ID_H_TAB    : Result := Result + CHAR_ESCAPE + CHAR_H_TAB    ;
+      ID_NEW_LINE : Result := Result + CHAR_ESCAPE + CHAR_NEW_LINE ;
+      ID_FORM_FEED: Result := Result + CHAR_ESCAPE + CHAR_FORM_FEED;
+      ID_C_RETURN : Result := Result + CHAR_ESCAPE + CHAR_C_RETURN ;
+      ID_Q_MARK   : Result := Result + CHAR_ESCAPE + CHAR_Q_MARK   ;
+      ID_R_SOLIDUS: Result := Result + CHAR_ESCAPE + CHAR_R_SOLIDUS;
       ID_SOLIDUS  : if (aEsc >= jetStrict)
-                      then Result := Result + CHAR_ESCAPE + ID_SOLIDUS
+                      then Result := Result + CHAR_ESCAPE + CHAR_SOLIDUS
                       else Result := Result + c;
       else
       begin

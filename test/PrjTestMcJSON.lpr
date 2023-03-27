@@ -342,10 +342,10 @@ begin
     SRef  := UTF8ToCP1252('aB' + #9 + #10 + 'çdç');       // because it isn't UTF-8
     Result := Result and ( SAnsi = SRef );
     // escape and unescape sequence
-    S := McJsonEscapeString('a/b\c"');
-    Result := Result and (S = 'a\/b\\c\"');
+    S := McJsonEscapeString('a/b\c"' + #8 + #9 + #10 + #12 + #13);
+    Result := Result and (S = 'a\/b\\c\"\b\t\n\f\r');
     S := McJsonUnEscapeString(S);
-    Result := Result and (S = 'a/b\c"');
+    Result := Result and (S = ('a/b\c"' + #8 + #9 + #10 + #12 + #13) );
     // bad escape (will be ignored)
     S := McJsonUnEscapeString('a\"\');
     Result := Result and (S = 'a"');
