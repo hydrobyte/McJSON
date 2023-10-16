@@ -99,7 +99,7 @@ type
     function parse(const aCode: string; aPos, aLen: Integer; aSpeed: Boolean): Integer; overload;
     // read methods used by parse
     function readString (const aCode: string; out aStr:string; aPos, aLen: Integer): Integer;
-    function readChar   (const aCode: string; aChar: Char; aPos, aLen: Integer): Integer;
+    function readChar   (const aCode: string; aChar: Char; aPos: Integer): Integer;
     function readKeyword(const aCode, aKeyword: string; aPos, aLen: Integer): Integer;
     function readValue  (const aCode: string; aPos, aLen: Integer): Integer;
     function readObject (const aCode: string; aPos, aLen: Integer; aSpeed: Boolean): Integer;
@@ -223,7 +223,7 @@ type
 
 implementation
 
-const C_MCJSON_VERSION = '1.1.0';
+const C_MCJSON_VERSION = '1.1.1';
 const C_EMPTY_KEY      = '__a3mptyStr__';
 
 resourcestring
@@ -912,7 +912,7 @@ begin
   begin
     // parse ','
     if (not first) then
-      c := readChar(aCode, ',', c, aLen);
+      c := readChar(aCode, ',', c);
     first := False;
     // escape white spaces
     Inc(c, escapeWS(aCode, c, aLen));
@@ -936,7 +936,7 @@ begin
     // escape white spaces
     Inc(c, escapeWS(aCode, c, aLen));
     // parse ':'
-    c := readChar(aCode, ':', c, aLen);
+    c := readChar(aCode, ':', c);
     // escape white spaces
     Inc(c, escapeWS(aCode, c, aLen));
     // parsing a value (recursive)
@@ -972,7 +972,7 @@ begin
   begin
     // parse ','
     if (not first) then
-      c := readChar(aCode, ',', c, aLen);
+      c := readChar(aCode, ',', c);
     first := False;
     // escape white spaces
     Inc(c, escapeWS(aCode, c, aLen));
@@ -1024,8 +1024,9 @@ begin
   Result := c;
 end;
 
-function TMcJsonItem.readChar(const aCode: string; aChar: Char; aPos, aLen: Integer): Integer;
+function TMcJsonItem.readChar(const aCode: string; aChar: Char; aPos: Integer): Integer;
 begin
+  // Valid-JSON: unexpected char
   if ( aCode[aPos] <> aChar ) then
     Error(SParsingError, 'expected ' + aChar + ' got ' + aCode[aPos], IntToStr(aPos));
   // stop next to aChar
@@ -1037,11 +1038,14 @@ var
   len: Integer;
   sAux: string;
 begin
-  len  := Length(aKeyword);
+  len := Length(aKeyword);
+  // valid-JSON
+  if (aPos+len > aLen) then
+    Error(SParsingError, 'bad reserved keyword', IntToStr(aLen));
   sAux := System.Copy(aCode, aPos, len);
   // valid-JSON
   if (Lowercase(sAux) <> aKeyword) then
-    Error(SParsingError, 'invalid keyword ' + sAux, IntToStr(aPos));
+    Error(SParsingError, 'invalid reserved keyword ' + sAux, IntToStr(aPos));
   // stop next to keyword last char
   Result := aPos + len;
 end;

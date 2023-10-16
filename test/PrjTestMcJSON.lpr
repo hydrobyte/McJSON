@@ -391,9 +391,11 @@ begin
     StrL.Add('bad value: invalid'        +'='+ '{"k":"v"a}'           );
     StrL.Add('bad value: line break'     +'='+ '{"k":"v'+#13+'"}'     );
     // values not recognized
-    StrL.Add('bad value: not keyword'    +'='+ '{"k":truee}'          );
-    StrL.Add('bad value: not keyword'    +'='+ '{"k":falsi}'          );
-    StrL.Add('bad value: not keyword'    +'='+ '{"k":nil  }'          );
+    StrL.Add('bad value: not keyword 1'  +'='+ '{"k":truee}'          );
+    StrL.Add('bad value: not keyword 2'  +'='+ '{"k":falsi}'          );
+    StrL.Add('bad value: not keyword 3'  +'='+ '{"k":nil  }'          );
+    StrL.Add('bad value: not keyword 4'  +'='+ '{"k":nul  }'          );
+    StrL.Add('bad value: not keyword 5'  +'='+ '{"k":tru  }'          );
     // key bad formats
     StrL.Add('bad key: no key'           +'='+ '{"value"}'            );
     StrL.Add('bad key: not closed 1'     +'='+ '{"k:"value"}'         );
@@ -683,7 +685,7 @@ begin
   N := TMcJsonItem.Create();
   Result  := True;
   anyPass := False;
-  for i := 1 to 7 do
+  for i := 1 to 9 do
   begin
     try
       N.AsJSON := '{"s": "123a"}';
@@ -725,13 +727,19 @@ begin
       // Exception Duplicate key "%s"
       else if (i = 7) then
       begin
-        N.AsJSON := '{"k":"v", "k":"v"}';
+        N.CheckException('{"k":"v", "k":"v"}');
         anyPass := True;
       end
       // Exception Error while parsing text: "%s" at pos "%s"
       else if (i = 8) then
       begin
         N.AsJSON := '{"n"[:null}';
+        anyPass := True;
+      end
+      // Exception Error while parsing text: "%s" at pos "%s"
+      else if (i = 9) then
+      begin
+        N.AsJSON := '{"n":nul}';
         anyPass := True;
       end;
     except
