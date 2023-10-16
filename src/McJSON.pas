@@ -199,7 +199,7 @@ type
 
   // TMcJsonItemEnumerator
   TMcJsonItemEnumerator = class
-  strict private
+  private
     fItem : TMcJsonItem;
     fIndex: Integer;
   public
@@ -1845,11 +1845,14 @@ end;
 
 function McJsonEscapeString(const aStr: string; aEsc: TJEscapeType): string;
 var
+  i, len: Integer;
   c: Char;
 begin
   Result := '';
-  for c in aStr do
+  len := Length(aStr);
+  for i := 1 to len do
   begin
+    c := aStr[I];
     case c of
       ID_BACKSPACE: Result := Result + CHAR_ESCAPE + CHAR_BACKSPACE;
       ID_H_TAB    : Result := Result + CHAR_ESCAPE + CHAR_H_TAB    ;
