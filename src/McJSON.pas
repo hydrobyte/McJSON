@@ -118,7 +118,7 @@ type
 
   public
     property Count   : Integer    read fGetCount;
-    property Key     : string     read fKey;
+    property Key     : string     read fKey     write fKey;
     property Value   : string     read fValue;
     property ItemType: TJItemType read fGetType write fSetType;
 
@@ -223,7 +223,7 @@ type
 
 implementation
 
-const C_MCJSON_VERSION = '1.1.1';
+const C_MCJSON_VERSION = '1.1.2';
 const C_EMPTY_KEY      = '__a3mptyStr__';
 
 resourcestring
@@ -545,9 +545,9 @@ begin
   // try to convert
   try
     case fValType of
-      jvtBoolean: Ans := Boolean(fValue = 'true') ; // expected
-      jvtString : Ans := Boolean(StrToInt(fValue)); // convertion
-      jvtNumber : Ans := Boolean(StrToInt(fValue)); // convertion
+      jvtBoolean: Ans := Boolean(fValue = 'true'  ); // expected
+      jvtString : Ans := Boolean(StrToBool(fValue)); // convertion
+      jvtNumber : Ans := Boolean(StrToInt(fValue) ); // convertion
       else        Aux := -1;
     end;
   except
@@ -862,7 +862,7 @@ begin
   end;
   // valid-JSON
   if (c < len) then
-    Error(SParsingError, 'bad json', IntToStr(len));
+    Error(SParsingError, 'bad json', IntToStr(c));
 end;
 
 function TMcJsonItem.parse(const aCode: string; aPos, aLen: Integer; aSpeed: Boolean): Integer;
@@ -1352,19 +1352,37 @@ end;
 function TMcJsonItem.IndexOf(const aKey: string): Integer;
 var
   k, idx: Integer;
+  item: TMcJsonItem;
 begin
   idx    := -1;
   Result := idx;
   // check
   if (Self = nil) then Error(SItemNil, 'index of');
   if (not Assigned(fChild)) then Exit;
-  // looking for an element
-  for k := 0 to (fChild.Count - 1) do
+  // if self is an object
+  if (Self.fType = jitObject) then
   begin
-    if (TMcJsonItem(fChild[k]).fKey = aKey) then
+    // looking for an child element
+    for k := 0 to (fChild.Count - 1) do
     begin
-      idx := k;
-      Break;
+      if (TMcJsonItem(fChild[k]).fKey = aKey) then
+      begin
+        idx := k;
+        Break;
+      end;
+    end;
+  end
+  else if (Self.fType = jitArray) then
+  begin
+    // looking for an child element: arrays items are "empty objects"
+    for k := 0 to (fChild.Count - 1) do
+    begin
+      item := TMcJsonItem(fChild[k]).Items[0];
+      if (TMcJsonItem(item).fKey = aKey) then
+      begin
+        idx := k;
+        Break;
+      end;
     end;
   end;
   // return the Result
@@ -1856,7 +1874,7 @@ begin
   len := Length(aStr);
   for i := 1 to len do
   begin
-    c := aStr[I];
+    c := aStr[i];
     case c of
       ID_BACKSPACE: Result := Result + CHAR_ESCAPE + CHAR_BACKSPACE;
       ID_H_TAB    : Result := Result + CHAR_ESCAPE + CHAR_H_TAB    ;

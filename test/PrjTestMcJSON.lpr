@@ -905,6 +905,38 @@ begin
   N.Free;
 end;
 
+function Test22(out Msg: string): Boolean;
+var
+  N, M, I: TMcJsonItem;
+begin
+  Msg := 'Test 22: array of objects';
+  N   := TMcJsonItem.Create;
+  M   := TMcJsonItem.Create;
+  Result := True;
+  try
+    // array of objects.
+    N.AsJSON := '{"l":[ {"a":{"ka":"va"}}, {"b":{"kb":"vb"}} ], "s":"b"}';
+    // mount a equal json object.
+    M.Add('l', jitArray);
+    I := M['l'].Add('a', jitObject); I := I['a']; I.S['ka'] := 'va';
+    I := M['l'].Add('b', jitObject); I := I['b']; I.S['kb'] := 'vb';
+    M.Add('s').AsString := 'b';
+    // check
+    I := M['l'].Values['b'];// Items[1];
+    Result := Result and ( N.AsJSON = M.AsJSON            );
+    Result := Result and ( I.AsJSON = '{"b":{"kb":"vb"}}' );
+    Result := Result and ( I['b'].HasKey('kb') = True     );
+  except
+    on E: Exception do
+    begin
+      Msg := Msg + #13#10 + sIndent + 'Error: ' + E.Message;
+      Result := False;
+    end;
+  end;
+  N.Free;
+  M.Free;
+end;
+
 function Test99(out Msg: string): Boolean;
 var
   Json: TMcJsonItem;
@@ -976,6 +1008,7 @@ begin
   Check(Test19, TotalPassed, TotalFailed);
   Check(Test20, TotalPassed, TotalFailed);
   Check(Test21, TotalPassed, TotalFailed);
+  Check(Test22, TotalPassed, TotalFailed);
 
   Check(Test99, TotalPassed, TotalFailed);
 
