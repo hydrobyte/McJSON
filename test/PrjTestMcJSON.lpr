@@ -862,6 +862,15 @@ begin
     Result := Result and (M.AsString = 'v2');
     M := N.Path('o.k2');
     Result := Result and (M.AsString = 'v2');
+    // test invalid paths
+    M := N.Path('o.k3');
+    Result := Result and (M = nil);
+    M := N.Path('p');
+    Result := Result and (M = nil);
+    M := N.Path('p.o');
+    Result := Result and (M = nil);
+    M := N.Path('p.k1');
+    Result := Result and (M = nil);
   except
     on E: Exception do
     begin
