@@ -1428,7 +1428,11 @@ begin
     // get by key
     sKey := GetKeyByPath(aPath, c, len);
     if (sKey <> '') then
-      aItem := aItem.fGetItemByKey(sKey);
+    begin
+      if ( aItem.HasKey(sKey) )
+        then aItem := aItem.fGetItemByKey(sKey)
+        else aItem := nil;
+    end;
   end;
   // result aItem to permit chain
   Result := aItem;

@@ -855,6 +855,8 @@ begin
     Result := Result and (M.AsString = 'v2');
     M := N.Path('o.k2');
     Result := Result and (M.AsString = 'v2');
+    M := N.Path('o.k3');
+    Result := Result and (M = nil);
   except
     on E: Exception do
     begin
