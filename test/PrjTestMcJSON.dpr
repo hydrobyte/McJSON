@@ -5,7 +5,7 @@ program PrjTestMcJSON;
 uses
   Classes,
   SysUtils,
-  McJSON in '..\McJSON.pas';
+  McJSON in '..\src\McJSON.pas';
 
 type
   TTest = function(out Msg: string): Boolean;
