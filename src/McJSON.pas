@@ -98,7 +98,7 @@ type
     procedure parse(const aCode: string; aSpeed: Boolean); overload;
     function parse(const aCode: string; aPos, aLen: Integer; aSpeed: Boolean): Integer; overload;
     // read methods used by parse
-    function readString (const aCode: string; out aStr:string; aPos, aLen: Integer): Integer;
+    function readString (const aCode: string; var aStr:string; aPos, aLen: Integer): Integer;
     function readChar   (const aCode: string; aChar: Char; aPos: Integer): Integer;
     function readKeyword(const aCode, aKeyword: string; aPos, aLen: Integer): Integer;
     function readValue  (const aCode: string; aPos, aLen: Integer): Integer;
@@ -223,7 +223,7 @@ type
 
 implementation
 
-const C_MCJSON_VERSION = '1.1.2';
+const C_MCJSON_VERSION = '1.1.3';
 const C_EMPTY_KEY      = '__a3mptyStr__';
 
 resourcestring
@@ -269,7 +269,7 @@ const
 { Auxiliary private functions }
 { ---------------------------------------------------------------------------- }
 
-function escapeChar(const aStr: string; aPos, aLen: Integer; out aUnk: Boolean): Integer;
+function escapeChar(const aStr: string; aPos, aLen: Integer; var aUnk: Boolean): Integer;
 var
   n: Integer;
 begin
@@ -861,8 +861,10 @@ begin
       Error(SItemNil, 'out of memory with ' + IntToStr(CountItems) + ' items');
   end;
   // valid-JSON
+  if (len = 0) then
+    Error(SParsingError, 'bad json', IntToStr(len));
   if (c < len) then
-    Error(SParsingError, 'bad json', IntToStr(c));
+    Error(SParsingError, 'bad json', IntToStr(c)  );
 end;
 
 function TMcJsonItem.parse(const aCode: string; aPos, aLen: Integer; aSpeed: Boolean): Integer;
@@ -994,7 +996,7 @@ begin
   Result := c+1;
 end;
 
-function TMcJsonItem.readString(const aCode: string; out aStr:string; aPos, aLen: Integer): Integer;
+function TMcJsonItem.readString(const aCode: string; var aStr:string; aPos, aLen: Integer): Integer;
 var
   c: Integer;
   unk: Boolean;

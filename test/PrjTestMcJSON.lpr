@@ -15,6 +15,9 @@ uses
 type
   TTest = function(out Msg: string): Boolean;
 
+  function ItemToStr(aItem: TMcJsonItem): string; forward;
+  procedure Inspect(aItem: TMcJsonItem; Ident: string); forward;
+
 var
   sIndent: string;
 
@@ -377,6 +380,8 @@ begin
   N := TMcJsonItem.Create;
   anyPass := False;
   try
+    // empty
+    StrL.Add('bad value: empty'          +'='+ ''                     );
     // value bad formats
     StrL.Add('bad value: not open'       +'='+ '{"k":value"}'         );
     StrL.Add('bad value: not close'      +'='+ '{"k":"value}'         );
@@ -977,6 +982,61 @@ begin
   end;
 end;
 
+function TestInspect(out Msg: string): Boolean;
+var
+  Json: TMcJsonItem;
+begin
+  Msg := 'Test: Inspect';
+  Json := TMcJsonItem.Create();
+  try
+    try
+      // add
+      Json.AsJSON := '{"a":{"k":"v"}}';
+      Inspect(Json, '');
+      // test final result
+      Result := True;
+    except
+    on E: Exception do
+    begin
+      Msg := Msg + #13#10 + sIndent + 'Error: ' + E.Message;
+      Result := False;
+    end;
+  end;
+  finally
+    Json.Free;
+  end;
+end;
+
+function ItemToStr(aItem: TMcJsonItem): string;
+begin
+  Result := '';
+  if (aItem <> nil) then
+    Result :=     aItem.GetTypeStr +
+      '; '      + aItem.GetValueStr +
+      '; Key='  + aItem.Key +
+      '; Value='+ aItem.Value +
+      '; JSON=' + aItem.AsJSON;
+end;
+
+procedure Inspect(aItem: TMcJsonItem; Ident: string);
+var
+  i: Integer;
+begin
+  if (aItem = nil) then Exit;
+  // log current
+  WriteLn( Ident + ItemToStr(aItem) );
+  // log child
+  if ( aItem.HasChild ) then
+  begin
+    Ident := '  ' + Ident;
+    for i := 0 to aItem.Count - 1 do
+    begin
+      // use Value not Child because are note using Key[].
+      Inspect( aItem.Items[i], Ident );
+    end;
+  end;
+end;
+
 procedure RunTests;
 var
   TotalPassed, TotalFailed: Integer;
@@ -1011,6 +1071,9 @@ begin
   Check(Test22, TotalPassed, TotalFailed);
 
   Check(Test99, TotalPassed, TotalFailed);
+
+  WriteLn;
+  Check(TestInspect, TotalPassed, TotalFailed);
 
   WriteLn;
   
