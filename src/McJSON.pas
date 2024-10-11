@@ -209,6 +209,9 @@ type
     property Current: TMcJsonItem read GetCurrent;
   end;
 
+  // Silence W1050 warning (D2009 and up).
+  TMySysCharSet = set of AnsiChar;
+
   // Auxiliary escape types and functions
   TJEscapeType = (jetNormal , // #8 #9 #10 #12 #13 " \
                   jetStrict , // Normal + /
@@ -223,7 +226,7 @@ type
 
 implementation
 
-const C_MCJSON_VERSION = '1.1.3';
+const C_MCJSON_VERSION = '1.1.4';
 const C_EMPTY_KEY      = '__a3mptyStr__';
 
 resourcestring
@@ -235,14 +238,14 @@ resourcestring
   SIndexInvalid      = 'Invalid index: %s';
 
 const
-  WHITESPACE: set of Char = [#9, #10, #13, #32]; // \t(ab), \n(LF), \r(CR), spc
-  LINEBREAK:  set of Char = [#10, #13];
-  ESCAPES:    set of Char = ['b', 't', 'n', 'f', 'r', '"', '/', '\', 'u' ];
-  DIGITS:     set of Char = ['0'..'9'];
-  SIGNS:      set of Char = ['+', '-'];
-  CLOSES:     set of Char = ['}', ']'];
-  HEXA:       set of Char = ['0'..'9', 'A'..'F', 'a'..'f'];
-  PATHSEPS:   set of Char = ['\', '/', '.'];
+  WHITESPACE: set of AnsiChar = [#9, #10, #13, #32]; // \t(ab), \n(LF), \r(CR), spc
+  LINEBREAK:  set of AnsiChar = [#10, #13];
+  ESCAPES:    set of AnsiChar = ['b', 't', 'n', 'f', 'r', '"', '/', '\', 'u' ];
+  DIGITS:     set of AnsiChar = ['0'..'9'];
+  SIGNS:      set of AnsiChar = ['+', '-'];
+  CLOSES:     set of AnsiChar = ['}', ']'];
+  HEXA:       set of AnsiChar = ['0'..'9', 'A'..'F', 'a'..'f'];
+  PATHSEPS:   set of AnsiChar = ['\', '/', '.'];
   // escape chars names
   CHAR_ESCAPE    = '\';
   CHAR_BACKSPACE = 'b';
@@ -269,6 +272,16 @@ const
 { Auxiliary private functions }
 { ---------------------------------------------------------------------------- }
 
+function myCharInSet(const aChar: Char; const aSet: TMySysCharSet): Boolean;
+begin
+  {$IFNDEF UNICODE}
+  Result := aChar in aSet;
+  {$ELSE}
+  Result := CharInSet(aChar, aSet);
+  {$ENDIF}
+end;
+
+
 function escapeChar(const aStr: string; aPos, aLen: Integer; var aUnk: Boolean): Integer;
 var
   n: Integer;
@@ -278,8 +291,8 @@ begin
   if (aStr[aPos] = '\') then
   begin
     // check next char is escapable
-    if (aPos < aLen) and
-       (aStr[aPos+1] in ESCAPES) then
+    if ( (aPos < aLen) and
+          myCharInSet(aStr[aPos+1], ESCAPES) ) then
     begin
       // one char escapes
       if (aStr[aPos+1] <> 'u') then
@@ -287,11 +300,11 @@ begin
       else
       //  u+(4 hexa) escape
       begin
-        if (aLen-aPos-1  >  4   ) and
-           (aStr[aPos+2] in HEXA) and
-           (aStr[aPos+3] in HEXA) and
-           (aStr[aPos+4] in HEXA) and
-           (aStr[aPos+5] in HEXA)
+        if ( ( (aLen-aPos-1) > 4            ) and
+              myCharInSet(aStr[aPos+2], HEXA) and
+              myCharInSet(aStr[aPos+3], HEXA) and
+              myCharInSet(aStr[aPos+4], HEXA) and
+              myCharInSet(aStr[aPos+5], HEXA) )
           then n := 6        // \u1234 (6 chars)
           else aUnk := True; // bad \u escape
       end
@@ -309,7 +322,8 @@ var
 begin
   c := aPos;
   n := 0;
-  while (c <= aLen) and (aStr[c] in WHITESPACE) do
+  while ( (c <= aLen) and
+           myCharInSet(aStr[c], WHITESPACE) ) do
   begin
     Inc(c);
     Inc(n);
@@ -341,7 +355,7 @@ begin
     if (n = 1) and (aStr[i] = '"') then
       opn := not opn;
     // ignore whitespaces chars
-    if not (opn) and (aStr[i] in WHITESPACE) then
+    if not (opn) and myCharInSet(aStr[i], WHITESPACE) then
       Inc(i)
     else
     // copy n chars from aStr to sRes and move on
@@ -1011,7 +1025,7 @@ begin
       // do escapes
       Inc(c, escapeChar(aCode, c, aLen, unk));
       // Valid-JSON: break lines
-      if (c > aLen) or (aCode[c] in LINEBREAK) then
+      if ( (c > aLen) or myCharInSet(aCode[c], LINEBREAK) ) then
         Error(SParsingError, 'line break', IntToStr(c));
       // Valid-JSON: unknown escape
       if (unk) then
@@ -1079,25 +1093,25 @@ begin
   // we got here because current symbol was '+/-' or Digit
   c := aPos;
   // 1. sign (optional)
-  if aCode[c] in SIGNS
+  if ( myCharInSet(aCode[c], SIGNS) )
     then Inc(c);
   // 2. some digits but not leading zeros
-  while (aCode[c] in DIGITS) do
+  while ( myCharInSet(aCode[c], DIGITS) ) do
     Inc(c);
   // 3. decimal dot (optional)
   if aCode[c] = '.'
     then Inc(c);
   // 4. fractional digits (optional)
-  while (aCode[c] in DIGITS) do
+  while ( myCharInSet(aCode[c], DIGITS) ) do
     Inc(c);
   // 5. scientific notation ...E-01
   if LowerCase(aCode[c]) = 'e' then
   begin
     ePos := c;
     Inc(c);
-    if aCode[c] in SIGNS
+    if ( myCharInSet(aCode[c], SIGNS) )
       then Inc(c);
-    while (aCode[c] in DIGITS) do
+    while ( myCharInSet(aCode[c], DIGITS) ) do
       Inc(c);
     // valid-JSON: bad scientific number
     if (ePos+1 = c) then
@@ -1112,8 +1126,8 @@ begin
   // escape white spaces
   Inc(c, escapeWS(aCode, c, aLen));
   // valid-JSON: not a number
-  if not ((aCode[c] = ','    ) or
-          (aCode[c] in CLOSES)) then
+  if not ( (aCode[c] = ','              ) or
+            myCharInSet(aCode[c], CLOSES) ) then
     Error(SParsingError, 'not a number', IntToStr(c));
   // valid-JSON: leading zero
   if (aCode[aPos]   =  '0') and (aPos < aLen) and (cEnd-aPos > 1) and
@@ -1401,10 +1415,10 @@ function TMcJsonItem.Path(const aPath: string): TMcJsonItem;
   begin
     Result := '';
     // check start with sep
-    if (aPath[aPos] in PATHSEPS) then
+    if ( myCharInSet(aPath[aPos], PATHSEPS) ) then
       Inc(aPos);
     c := aPos;
-    while (c <= aLen) and not (aPath[c] in PATHSEPS) do
+    while ( (c <= aLen) and not myCharInSet(aPath[c], PATHSEPS) ) do
     begin
       Inc(c);
     end;
@@ -1735,18 +1749,18 @@ begin
   // asUTF8 has difference in behavior in Delphi(true)/Lazarus(false).
   if (asUTF8)
     then Self.AsJSON := Utf8ToAnsi(sCode) // UTF-8 to ANSI
-    else Self.AsJSON := sCode;            // keep as read
+    else Self.AsJSON := string(sCode);    // keep as read
 end;
 
 procedure TMcJsonItem.SaveToStream(Stream: TStream; asHuman, asUTF8: Boolean);
 var
-  sCode: AnsiString;
+  sCode: UTF8String;
   len  : Int64;
 begin
-  sCode := Self.ToString(asHuman);
+  sCode := UTF8String(Self.ToString(asHuman)); // Why UTF8String cast? See W1057.
   // asUTF8 has difference in behavior in Delphi(true)/Lazarus(false).
-  if (asUTF8) then 
-    sCode := AnsiToUtf8(sCode);
+  if (asUTF8) then
+    sCode := AnsiToUtf8(string(sCode));        // Why string cast? See W1057.
   len := Length(sCode);
   Stream.Write(Pointer(sCode)^, len);
 end;
@@ -1949,10 +1963,12 @@ begin
         Inc(cs);
       end
       // unescape u+(4 hexa) escaped chars
-      else if (aStr[cs]  = CHAR_U_HEX) and
-              (len-cs   >= 4         ) and
-              (aStr[cs+1] in HEXA) and (aStr[cs+2] in HEXA) and
-              (aStr[cs+3] in HEXA) and (aStr[cs+1] in HEXA) then
+      else if ( (aStr[cs]  = CHAR_U_HEX      ) and
+                (len-cs   >= 4               ) and
+                 myCharInSet(aStr[cs+1], HEXA) and
+                 myCharInSet(aStr[cs+2], HEXA) and
+                 myCharInSet(aStr[cs+3], HEXA) and
+                 myCharInSet(aStr[cs+1], HEXA) ) then
       begin
         try
           ans[cd] := Chr( StrToInt('$' + Copy(aStr, cs+1, 4)) );
