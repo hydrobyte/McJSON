@@ -176,8 +176,7 @@ type
     function At(aIdx: Integer; const aKey: string = ''): TMcJsonItem; overload;
     function At(const aKey: string; aIdx: Integer = -1): TMcJsonItem; overload;
 
-    function ToString: string;{$IFNDEF FPC} overload;{$ELSE} override;{$ENDIF}
-    function ToString(aHuman: Boolean = False): string; overload;
+    function ToString(aHuman: Boolean = False): string; overload; inline;
     function Minify(const aCode: string): string;
 
     procedure LoadFromStream(Stream: TStream; asUTF8: Boolean = True);
@@ -1719,10 +1718,10 @@ begin
   Result := aItem;
 end;
 
-function TMcJsonItem.ToString: string;
+{function TMcJsonItem.ToString: string;
 begin
   Result := sFormat(False);
-end;
+end;}
 
 function TMcJsonItem.ToString(aHuman: Boolean): string;
 begin
