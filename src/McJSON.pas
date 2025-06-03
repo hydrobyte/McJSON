@@ -2,7 +2,7 @@
 
   The MIT License (MIT)
 
-  Copyright (c) 2021 - 2024,  HydroByte Software
+  Copyright (c) 2021 - 2025,  HydroByte Software
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to deal
@@ -225,7 +225,7 @@ type
 
 implementation
 
-const C_MCJSON_VERSION = '1.1.4';
+const C_MCJSON_VERSION = '1.1.5';
 const C_EMPTY_KEY      = '__a3mptyStr__';
 
 resourcestring
@@ -1962,7 +1962,7 @@ begin
                  myCharInSet(aStr[cs+1], HEXA) and
                  myCharInSet(aStr[cs+2], HEXA) and
                  myCharInSet(aStr[cs+3], HEXA) and
-                 myCharInSet(aStr[cs+1], HEXA) ) then
+                 myCharInSet(aStr[cs+4], HEXA) ) then
       begin
         try
           ans[cd] := Chr( StrToInt('$' + Copy(aStr, cs+1, 4)) );

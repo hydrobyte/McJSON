@@ -181,6 +181,7 @@ begin
     N.Add('k1').Add('k2').Add('k3').AsString := 'v3';
     Result := Result and (N.AsJSON = '{"k1":{"k2":{"k3":"v3"}}}');
     // add int values into array
+    P.Clear;
     P.Add('a', jitArray);
     P['a'].Add.AsInteger := 1;
     P['a'].Add.AsInteger := 2;
@@ -984,6 +985,39 @@ begin
   end;
 end;
 
+function TestIssues(out Msg: string): Boolean;
+var
+  Json, JsonArray: TMcJsonItem;
+begin
+  Msg := 'Test: Github issue from Tesla2k';
+  JsonArray := TMcJsonItem.Create();
+  Json      := TMcJsonItem.Create();
+  try
+    try
+      // array
+      JsonArray.ItemType := jitArray;
+      JsonArray.Add.AsString  := 'TestValue';
+      JsonArray.Add.AsBoolean := True;
+      // object
+      //Json.Add('str1').AsString   := 'val1';
+      //Json.Add('bool1').AsBoolean := True;
+      Json.Add('TestString').AsString  := JsonArray.Items[0].AsString;
+      Json.Add('TestBool'  ).AsBoolean := JsonArray.Items[1].AsBoolean;
+      // test final result
+      Result := (Json.AsJSON = '{"TestString":"TestValue","TestBool":true}');
+    except
+    on E: Exception do
+    begin
+      Msg := Msg + #13#10 + sIndent + 'Error: ' + E.Message;
+      Result := False;
+    end;
+  end;
+  finally
+    Json.Free;
+    JsonArray.Free;
+  end;
+end;
+
 function TestInspect(out Msg: string): Boolean;
 var
   Json: TMcJsonItem;
@@ -1075,6 +1109,8 @@ begin
   Check(Test22, TotalPassed, TotalFailed);
 
   Check(Test99, TotalPassed, TotalFailed);
+
+  Check(TestIssues, TotalPassed, TotalFailed);
 
   WriteLn;
   Check(TestInspect, TotalPassed, TotalFailed);
