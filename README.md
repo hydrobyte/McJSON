@@ -324,6 +324,48 @@ Results in:
 }
 ```
 
+### Add objects
+To add objects inside others, simply use the `Add()` method:
+```pascal
+M.Add('k1').AsString := 'v1';
+P.Add('k2').AsString := 'v2';
+N.ItemType := jitArray;       // important: array of objects
+N.Add(M);
+N.Add(P);
+```
+Note that the `N` object must be set to `jitArray` in order to receive two or more objects.
+
+Results in:
+```json
+[
+  {
+    "k1": "v1"
+  },
+  {
+    "k2": "v2"
+  }
+]
+```
+
+### Add pairs
+To add `key:value` pairs inside other objects, use the `AddPair()` method:
+```pascal
+M.Add('k1').AsString := 'v1';
+P.Add('k2').AsString := 'v2';
+N.ItemType := jitObject;      // important: must be an object
+N.AddPair(M.Items[0]);
+N.AddPair(P.Items[0]);
+```
+Note that the `N` object must be set to `jitObject` in order to receive `key:value` pairs.
+
+Results in:
+```json
+{
+  "k1": "v1",
+  "k2": "v2"
+}
+```
+
 ### Insert items
 Insert some items using keys and position.
 ```pascal

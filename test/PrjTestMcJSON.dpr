@@ -176,6 +176,24 @@ begin
     N.Clear;
     N.Add('o').ItemType := jitObject;
     Result := Result and (N.AsJSON = '{"o":{}}');
+    // add TMcJsonItem objects
+    N.Clear;
+    M.Clear; P.Clear;
+    M.Add('k1').AsString := 'v1';
+    P.Add('k2').AsString := 'v2';
+    N.ItemType := jitArray;
+    N.Add(M);
+    N.Add(P);
+    Result := Result and (N.AsJSON = '[{"k1":"v1"},{"k2":"v2"}]');
+    // add pairs
+    N.Clear;
+    M.Clear; P.Clear;
+    M.Add('k1').AsString := 'v1';
+    P.Add('k2').AsString := 'v2';
+    N.ItemType := jitObject;
+    N.AddPair(M.Items[0]);
+    N.AddPair(P.Items[0]);
+    Result := Result and (N.AsJSON = '{"k1":"v1","k2":"v2"}');
     // add nested object
     N.Clear;
     N.Add('k1').Add('k2').Add('k3').AsString := 'v3';
@@ -999,10 +1017,11 @@ begin
       JsonArray.Add.AsString  := 'TestValue';
       JsonArray.Add.AsBoolean := True;
       // object
-      //Json.Add('str1').AsString   := 'val1';
-      //Json.Add('bool1').AsBoolean := True;
       Json.Add('TestString').AsString  := JsonArray.Items[0].AsString;
       Json.Add('TestBool'  ).AsBoolean := JsonArray.Items[1].AsBoolean;
+      // alternative (fail: it changes id 1´s value from boolean to string)
+//      Json.AddPair(JsonArray.Items[0]).Key := 'TestString';
+//      Json.AddPair(JsonArray.Items[1]).Key := 'TestBool'  ;
       // test final result
       Result := (Json.AsJSON = '{"TestString":"TestValue","TestBool":true}');
     except

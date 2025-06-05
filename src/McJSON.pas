@@ -119,7 +119,7 @@ type
   public
     property Count   : Integer    read fGetCount;
     property Key     : string     read fKey     write fKey;
-    property Value   : string     read fValue;
+    property Value   : string     read fValue   write fValue;
     property ItemType: TJItemType read fGetType write fSetType;
 
     property Keys  [aIdx      : Integer]: string      read fGetKey;
@@ -160,6 +160,7 @@ type
     function Add(const aKey: string; aItemType: TJItemType): TMcJsonItem; overload;
     function Add(aItemType: TJItemType): TMcJsonItem; overload;
     function Add(const aItem: TMcJsonItem): TMcJsonItem; overload;
+    function AddPair(const aItem: TMcJsonItem): TMcJsonItem;
     function Copy(const aItem: TMcJsonItem): TMcJsonItem; overload;
     function Clone: TMcJsonItem; overload;
     function Insert(const aKey: string; aIdx: Integer): TMcJsonItem; overload;
@@ -225,7 +226,7 @@ type
 
 implementation
 
-const C_MCJSON_VERSION = '1.1.5';
+const C_MCJSON_VERSION = '1.1.7';
 const C_EMPTY_KEY      = '__a3mptyStr__';
 
 resourcestring
@@ -1526,6 +1527,17 @@ begin
   fChild.Add(aNewItem);
   // result aNewItem to permit chain
   Result := aNewItem;
+end;
+
+function TMcJsonItem.AddPair(const aItem: TMcJsonItem): TMcJsonItem;
+var
+  aPair: TMcJsonItem;
+begin
+  aPair := Self.Add(aItem.Key);
+  aPair.ItemType := jitValue;
+  APair.Value    := aItem.Value;
+  // result aItem to permit chain
+  Result := aPair;
 end;
 
 function TMcJsonItem.Copy(const aItem: TMcJsonItem): TMcJsonItem;
